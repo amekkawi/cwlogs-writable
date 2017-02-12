@@ -1,0 +1,180 @@
+{
+  "plugins": [
+    "jsdoc"
+  ],
+  "env": {
+    "node": true,
+    "browser": true
+  },
+  "globals": {
+    "Promise": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "rules": {
+    "curly": [
+      "error",
+      "all"
+    ],
+    "comma-dangle": [
+      "error",
+      "never"
+    ],
+    "block-scoped-var": "error",
+    "dot-location": [
+      "error",
+      "property"
+    ],
+    "dot-notation": "error",
+    "eqeqeq": [
+      "error",
+      "smart"
+    ],
+    "no-implicit-globals": "error",
+    "no-throw-literal": "error",
+    "no-useless-escape": "error",
+    "array-bracket-spacing": "error",
+    "block-spacing": "error",
+    "brace-style": [
+      "error",
+      "stroustrup"
+    ],
+    "comma-spacing": "error",
+    "computed-property-spacing": "error",
+    "consistent-this": [
+      "error",
+      "self"
+    ],
+    "eol-last": [
+      "error",
+      "always"
+    ],
+    "linebreak-style": [
+      "error",
+      "unix"
+    ],
+    "no-trailing-spaces": "error",
+    "indent": [
+      "error",
+      "tab",
+      {
+        "SwitchCase": 1,
+        "MemberExpression": 1,
+        "CallExpression": {
+          "arguments": 1
+        }
+      }
+    ],
+    "jsx-quotes": "error",
+    "key-spacing": "error",
+    "keyword-spacing": "error",
+    "max-len": [
+      "error",
+      {
+        "code": 200,
+        "ignoreComments": true
+      }
+    ],
+    "new-parens": "error",
+    "no-multiple-empty-lines": [
+      "error",
+      {
+        "max": 3,
+        "maxEOF": 1,
+        "maxBOF": 0
+      }
+    ],
+    "no-spaced-func": "error",
+    "object-curly-spacing": [
+      "error",
+      "always"
+    ],
+    "object-property-newline": [
+      "error",
+      {
+        "allowMultiplePropertiesPerLine": true
+      }
+    ],
+    "one-var-declaration-per-line": [
+      "error",
+      "initializations"
+    ],
+    "operator-linebreak": [
+      "error",
+      "before"
+    ],
+    "quote-props": [
+      "error",
+      "as-needed"
+    ],
+    "quotes": [
+      "error",
+      "single",
+      {
+        "avoidEscape": true,
+        "allowTemplateLiterals": true
+      }
+    ],
+    "semi": [
+      "error",
+      "always",
+      {
+        "omitLastInOneLineBlock": true
+      }
+    ],
+    "semi-spacing": "error",
+    "space-before-blocks": "error",
+    "space-in-parens": "error",
+    "space-infix-ops": "error",
+    "space-unary-ops": "error",
+    "unicode-bom": "error",
+    "arrow-spacing": "error",
+    "space-before-function-paren": [
+      "error",
+      "never"
+    ],
+    "no-duplicate-imports": [
+      "error",
+      {
+        "includeExports": true
+      }
+    ],
+    "no-useless-computed-key": "error",
+    "template-curly-spacing": "error",
+    "jsdoc/check-param-names": "error",
+    "jsdoc/check-tag-names": "off",
+    "jsdoc/newline-after-description": "error",
+    "jsdoc/require-hyphen-before-param-description": "error",
+    "jsdoc/require-param": "error",
+    "jsdoc/require-param-type": "error",
+    "jsdoc/require-returns-type": "error",
+    "jsdoc/require-description-complete-sentence": "off",
+    "valid-jsdoc": [
+      "error",
+      {
+        "prefer": {
+          "return": "returns",
+          "exception": "throws",
+          "prop": "property",
+          "arg": "param",
+          "argument": "param",
+          "func": "function",
+          "desc": "description"
+        },
+        "preferType": {
+          "Function": "function",
+          "Object": "object",
+          "Boolean": "boolean",
+          "Number": "number",
+          "String": "string",
+          "NULL": "null"
+        },
+        "requireReturn": false,
+        "requireReturnType": false,
+        "requireParamDescription": false,
+        "requireReturnDescription": false
+      }
+    ]
+  }
+}

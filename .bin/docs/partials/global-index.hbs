@@ -1,0 +1,35 @@
+{{#globals kind="typedef" ~}}
+{{#if @first~}}{{>heading-indent}}Typedef
+
+<dl>
+{{/if~}}
+<dt>{{>sig-link-html}}</dt>
+<dd>{{{md (inlineLinks description)}}}</dd>
+{{#if @last~}}</dl>
+
+{{/if~}}
+{{/globals~}}
+
+{{#globals kind="class" category=void ~}}
+{{#if @first~}}{{>heading-indent}}Classes
+
+<dl>
+{{/if~}}
+<dt>{{>sig-link-html}}</dt>
+<dd>{{{md (inlineLinks description)}}}</dd>
+{{#if @last~}}</dl>
+
+{{/if~}}
+{{/globals~}}
+
+{{#globals kind="class" category="errors" ~}}
+{{#if @first~}}{{>heading-indent}}Error Classes
+
+<dl>
+{{/if~}}
+<dt>{{>sig-link-html}}</dt>
+<dd>{{{md (inlineLinks description)}}}</dd>
+{{#if @last~}}</dl>
+
+{{/if~}}
+{{/globals~}}

@@ -1,0 +1,20 @@
+{{#identifiers id="CWLogsWritable()"}}
+{{#if params}}
+{{#paramsOptions}}
+{{#each this~}}
+- **{{name}}**
+
+   {{#if optional}}Optional{{else}}Required{{/if}}{{~#if type}}{{>brsp}}
+   Type: {{>linked-type-list types=type.names delimiter=" | " }}{{/if}}
+{{~#unless (equal defaultvalue undefined)}}{{>brsp}}
+   Default: {{>defaultvalue}}{{/unless}}
+
+{{~#if description}}
+
+
+   {{{inlineLinks description}}}{{/if}}
+
+{{/each}}
+{{/paramsOptions~}}
+{{/if}}
+{{/identifiers}}

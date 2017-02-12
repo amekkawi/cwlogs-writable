@@ -1,0 +1,49 @@
+{
+  "name": "cwlogs-writable",
+  "version": "0.1.0",
+  "description": "Writable stream for AWS CloudWatch Logs",
+  "main": "lib/index.js",
+  "author": "Andre Mekkawi <github@andremekkawi.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/amekkawi/cwlogs-writable/issues"
+  },
+  "homepage": "https://github.com/amekkawi/cwlogs-writable",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amekkawi/cwlogs-writable.git"
+  },
+  "scripts": {
+    "docs": "npm run docs-readme && npm run docs-changelog && npm run docs-api && npm run docs-api-protected",
+    "docs-readme": "node .bin/docs/index.js README.md --readme=README --overwrite",
+    "docs-changelog": "node .bin/docs/index.js CHANGELOG.md --readme=CHANGELOG --overwrite --protected",
+    "docs-api": "node .bin/docs/index.js docs/api.md --overwrite --unified",
+    "docs-api-protected": "node .bin/docs/index.js docs/api-protected.md --overwrite --protected --unified",
+    "test": "mocha --bail --require ./test/setup.js ./test/index.js",
+    "test-live": "mocha --bail --require ./test/setup.js ./test/aws-livetest.spec.js",
+    "lint": "eslint lib"
+  },
+  "keywords": [
+    "aws",
+    "cloudwatch",
+    "logs",
+    "bunyan"
+  ],
+  "dependencies": {
+    "aws-sdk": "^2.0.0"
+  },
+  "devDependencies": {
+    "dmd": "2.1.2",
+    "eslint": "^3.9.1",
+    "eslint-plugin-jsdoc": "^2.3.1",
+    "expect": "^1.20.2",
+    "handlebars": "3.0.3",
+    "jsdoc-api": "2.0.5",
+    "jsdoc-parse": "2.0.5",
+    "minimist": "^1.2.0",
+    "mocha": "^3.0.2",
+    "object-inspect": "^1.2.1",
+    "proxyquire": "^1.7.11",
+    "uuid": "^3.0.1"
+  }
+}
