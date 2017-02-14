@@ -12,10 +12,12 @@ Writable stream for AWS CloudWatch Logs
 
 There are two forms of the API docs:
 
-* [Normal API docs](docs/api.md) - Use this if you using cwlogs-writable as-is and not customizing/extending it's functionality.
-* [Extended API docs](docs/api-protected.md) - Use this to also view `protected` methods that you can use to customize/extend cwlogs-writable.
+* [Normal API docs](docs/api.md) - Use this if you using cwlogs-writable
+  as-is and not customizing/extending it's functionality.
+* [Extended API docs](docs/api-protected.md) - Use this to also view
+  `protected` methods that you can use to customize/extend cwlogs-writable.
 
-## Bunyan Quick Start ##
+## Quick Start ##
 
 Install the library using NPM into your existing node project:
 
@@ -23,7 +25,30 @@ Install the library using NPM into your existing node project:
 npm install cwlogs-writable
 ```
 
-Add as a stream to bunyan:
+Create and write to the stream.
+
+```javascript
+var CWLogsWritable = require('cwlogs-writable');
+
+var stream = new CWLogsWritable({
+  logGroupName: 'my-aws-log-group',
+  logStreamName: 'my-log-stream',
+
+  // Options passed to the AWS.CloudWatchLogs service.
+  cloudWatchLogsOptions: {
+    // Change the AWS region as needed.
+    region: 'us-east-1',
+
+    // Example authenticating using access key.
+    accessKeyId: '{AWS-IAM-USER-ACCESS-KEY-ID}',
+    secretAccessKey: '{AWS-SECRET-ACCESS-KEY}'
+  }
+});
+
+stream.write('example-log-message');
+```
+
+## Bunyan Example ##
 
 ```javascript
 var bunyan = require('bunyan');
@@ -42,16 +67,7 @@ var logger = bunyan.createLogger({
       stream: new CWLogsWritable({
         logGroupName: 'my-aws-log-group',
         logStreamName: 'my-log-stream',
-
-        // Options passed to the AWS.CloudWatchLogs service.
-        cloudWatchLogsOptions: {
-          // Change the AWS region as needed.
-          region: 'us-east-1',
-
-          // Example authenticating using access key.
-          accessKeyId: '{AWS-IAM-USER-ACCESS-KEY-ID}',
-          secretAccessKey: '{AWS-SECRET-ACCESS-KEY}'
-        }
+        cloudWatchLogsOptions: { /* ... */ }
       })
     }
   ]
@@ -60,13 +76,14 @@ var logger = bunyan.createLogger({
 
 ## Recovering from AWS Errors ##
 
-By default the CWLogsWritable stream will emit an 'error' event and
-internally disable the stream when an AWS error is encountered (See [CWLogsWritable#onError](docs/api.md#CWLogsWritable+onError)).
+When an AWS error is encounted, the default behavior of a CWLogsWritable
+stream is to emit an 'error' event, clear any queued logs, and ignore all
+further writes to the stream to prevent memory leaks.
 
-To override this behavior you can provide a `onError` callback that will allow you to recover from these errors.
+To override this behavior you can provide a `onError` callback that will
+allow you to recover from these errors.
 
 ```javascript
-var bunyan = require('bunyan');
 var CWLogsWritable = require('cwlogs-writable');
 
 function onError(err, logEvents, next) {
@@ -99,21 +116,13 @@ function onError(err, logEvents, next) {
   }
 }
 
-var logger = bunyan.createLogger({
-  name: 'foo',
-  streams: [
-    {
-      level: 'debug',
-      stream: new CWLogsWritable({
-        logGroupName: 'my-aws-log-group',
-        logStreamName: 'my-log-stream',
-        cloudWatchLogsOptions: { /* ... */ },
+var stream = new CWLogsWritable({
+  logGroupName: 'my-aws-log-group',
+  logStreamName: 'my-log-stream',
+  cloudWatchLogsOptions: { /* ... */ },
 
-        // Pass the onError callback to CWLogsWritable
-        onError: onError
-      })
-    }
-  ]
+  // Pass the onError callback to CWLogsWritable
+  onError: onError
 });
 ```
 
@@ -201,7 +210,7 @@ See [CHANGELOG.md](CHANGELOG.md)
 
 The MIT License (MIT)
 
-Copyright (c) 2016 Andre Mekkawi &lt;github@andremekkawi.com&gt;
+Copyright (c) 2017 Andre Mekkawi &lt;github@andremekkawi.com&gt;
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
