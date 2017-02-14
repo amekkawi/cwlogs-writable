@@ -63,7 +63,7 @@ var stream = new CWLogsWritable({
 <a name="CWLogsWritable+queuedLogs"></a>
 
 ### cwLogsWritable.queuedLogs : <code>Array.&lt;{message:string, timestamp:number}&gt;</code>
-Logs queued to be sent to AWS CloudWatch. Do not modify directly.
+Logs queued to be sent to AWS CloudWatch Logs. Do not modify directly.
 
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 **Access:** protected  
@@ -115,7 +115,7 @@ Validate the options passed to [CWLogsWritable](#CWLogsWritable).
 <a name="CWLogsWritable+getQueueSize"></a>
 
 ### cwLogsWritable.getQueueSize() ⇒ <code>number</code>
-Get the number of log events queued to be sent to AWS CloudWatch.
+Get the number of log events queued to be sent to AWS CloudWatch Logs.
 
 Does not include events that are actively being sent.
 
@@ -160,8 +160,8 @@ The `next` argument must be called in one of the following ways:
   will be processed by the stream. This effectively disables the stream.
 
 - **`next()` or `next(logEvents)`** — The stream will recover from the error and
-  resume sending logs to AWS CloudWatch. The first argument may optionally be an
-  array of log event objects (i.e. `logEvents` argument) that will be added to
+  resume sending logs to AWS CloudWatch Logs. The first argument may optionally be
+  an array of log event objects (i.e. `logEvents` argument) that will be added to
   the head of the log events queue.
 
 **Kind**: instance method of <code>[CWLogsWritable](#CWLogsWritable)</code>  
