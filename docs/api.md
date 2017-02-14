@@ -33,7 +33,7 @@ Writable stream for AWS CloudWatch Logs.
 - options <code>object</code>
     - .logGroupName <code>string</code> - AWS CloudWatch [LogGroup](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) name. It will be created if it doesn't exist.
     - .logStreamName <code>string</code> - AWS CloudWatch [LogStream](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) name. It will be created if it doesn't exist.
-    - [.cloudWatchLogsOptions] <code>object</code> <code> = {}</code> - Options passed when creating [AWS.CloudWatchLogs](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#constructor-property) service.
+    - [.cloudWatchLogsOptions] <code>object</code> <code> = {}</code> - Options passed to [AWS.CloudWatchLogs](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#constructor-property) service.
     - [.writeInterval] <code>string</code> | <code>number</code> <code> = &quot;nextTick&quot;</code> - Amount of wait time after a Writable#_write call to allow batching of log events. Must be a positive number or "nextTick". If "nextTick", `process.nextTick` is used. If a number, `setTimeout` is used.
     - [.retryableDelay] <code>string</code> | <code>number</code> <code> = 150</code>
     - [.retryableMax] <code>number</code> <code> = 100</code> - Maximum number of times a AWS error marked as "retryable" will be retried before the error is instead passed to [onError](#CWLogsWritable+onError).
@@ -59,18 +59,26 @@ var stream = new CWLogsWritable({
 <a name="CWLogsWritable+logGroupName"></a>
 
 ### cwLogsWritable.logGroupName : <code>string</code>
+AWS CloudWatch [LogGroup](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) name. It will be created if it doesn't exist.
+
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 <a name="CWLogsWritable+logStreamName"></a>
 
 ### cwLogsWritable.logStreamName : <code>string</code>
+AWS CloudWatch [LogStream](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) name. It will be created if it doesn't exist.
+
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 <a name="CWLogsWritable+writeInterval"></a>
 
 ### cwLogsWritable.writeInterval : <code>string</code> &#124; <code>number</code>
+Amount of wait time after a Writable#_write call to allow batching of log events. Must be a positive number or "nextTick". If "nextTick", `process.nextTick` is used. If a number, `setTimeout` is used.
+
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 <a name="CWLogsWritable+retryableMax"></a>
 
 ### cwLogsWritable.retryableMax : <code>number</code>
+Maximum number of times a AWS error marked as "retryable" will be retried before the error is instead passed to [onError](#CWLogsWritable+onError).
+
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 <a name="CWLogsWritable+retryableDelay"></a>
 
@@ -79,10 +87,14 @@ var stream = new CWLogsWritable({
 <a name="CWLogsWritable+maxBatchCount"></a>
 
 ### cwLogsWritable.maxBatchCount : <code>number</code>
+Maximum number of log events allowed in a single PutLogEvents API call.
+
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 <a name="CWLogsWritable+maxBatchSize"></a>
 
 ### cwLogsWritable.maxBatchSize : <code>number</code>
+Maximum number of bytes allowed in a single PutLogEvents API call.
+
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 <a name="CWLogsWritable+cloudwatch"></a>
 

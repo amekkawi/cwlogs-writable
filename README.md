@@ -148,7 +148,7 @@ var stream = new CWLogsWritable({
    Type: <code>object</code>  
    Default: <code>{}</code>
 
-   Options passed when creating [AWS.CloudWatchLogs](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#constructor-property) service.
+   Options passed to [AWS.CloudWatchLogs](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#constructor-property) service.
 
 - **writeInterval**
 
