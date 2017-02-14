@@ -13,6 +13,7 @@
     * [.writeInterval](#CWLogsWritable+writeInterval) : <code>string</code> &#124; <code>number</code>
     * [.retryableMax](#CWLogsWritable+retryableMax) : <code>number</code>
     * [.retryableDelay](#CWLogsWritable+retryableDelay) : <code>string</code> &#124; <code>number</code>
+    * [.maxBatchCount](#CWLogsWritable+maxBatchCount) : <code>number</code>
     * [.maxBatchSize](#CWLogsWritable+maxBatchSize) : <code>number</code>
     * [.cloudwatch](#CWLogsWritable+cloudwatch) : <code>CloudWatchLogs</code>
     * [.validateOptions(options)](#CWLogsWritable+validateOptions)
@@ -42,6 +43,7 @@ Writable stream for AWS CloudWatch Logs.
     - [.writeInterval] <code>string</code> | <code>number</code> <code> = &quot;nextTick&quot;</code> - Amount of wait time after a Writable#_write call to allow batching of log events. Must be a positive number or "nextTick". If "nextTick", `process.nextTick` is used. If a number, `setTimeout` is used.
     - [.retryableDelay] <code>string</code> | <code>number</code> <code> = 150</code>
     - [.retryableMax] <code>number</code> <code> = 100</code> - Maximum number of times a AWS error marked as "retryable" will be retried before the error is instead passed to [onError](#CWLogsWritable+onError).
+    - [.maxBatchCount] <code>number</code> <code> = 10000</code> - Maximum number of log events allowed in a single PutLogEvents API call.
     - [.maxBatchSize] <code>number</code> <code> = 1048576</code> - Maximum number of bytes allowed in a single PutLogEvents API call.
     - [.onError] <code>function</code> - Called when an AWS error is encountered. Overwrites [onError](#CWLogsWritable+onError) method.
     - [.filterWrite] <code>function</code> - Filter writes to CWLogsWritable. Overwrites [filterWrite](#CWLogsWritable+filterWrite) method.
@@ -86,6 +88,10 @@ Logs queued to be sent to AWS CloudWatch Logs. Do not modify directly.
 <a name="CWLogsWritable+retryableDelay"></a>
 
 ### cwLogsWritable.retryableDelay : <code>string</code> &#124; <code>number</code>
+**Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
+<a name="CWLogsWritable+maxBatchCount"></a>
+
+### cwLogsWritable.maxBatchCount : <code>number</code>
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 <a name="CWLogsWritable+maxBatchSize"></a>
 

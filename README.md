@@ -172,6 +172,14 @@ var stream = new CWLogsWritable({
 
    Maximum number of times a AWS error marked as "retryable" will be retried before the error is instead passed to [CWLogsWritable#onError](docs/api.md#CWLogsWritable+onError).
 
+- **maxBatchCount**
+
+   Optional  
+   Type: <code>number</code>  
+   Default: <code>10000</code>
+
+   Maximum number of log events allowed in a single PutLogEvents API call.
+
 - **maxBatchSize**
 
    Optional  

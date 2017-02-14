@@ -173,6 +173,37 @@ describe('CWLogsWritable', function() {
 				new CWLogsWritable({
 					logGroupName: '',
 					logStreamName: '',
+					maxBatchCount: 1
+				});
+
+				new CWLogsWritable({
+					logGroupName: '',
+					logStreamName: '',
+					maxBatchCount: 1000
+				});
+
+				new CWLogsWritable({
+					logGroupName: '',
+					logStreamName: '',
+					maxBatchCount: 10000
+				});
+			}).toNotThrow();
+
+			[void 0, null, -1, 0, 10001, true, false, '', '0', '1', '256', '1048576', Infinity, -Infinity, {}, [], NaN, noop]
+				.forEach(function(val) {
+					expect(function() {
+						new CWLogsWritable({
+							logGroupName: '',
+							logStreamName: '',
+							maxBatchCount: val
+						});
+					}).toThrowWithProps(Error, { message: 'maxBatchCount option must be a positive number from 1 to 10000, if specified' }, val);
+				});
+
+			expect(function() {
+				new CWLogsWritable({
+					logGroupName: '',
+					logStreamName: '',
 					maxBatchSize: 256
 				});
 
@@ -259,6 +290,7 @@ describe('CWLogsWritable', function() {
 			expect(streamDefaults.writeInterval).toBe('nextTick', 'Expected writeInterval prop default %s to be %s');
 			expect(streamDefaults.retryableMax).toBe(100, 'Expected retryableMax prop default %s to be %s');
 			expect(streamDefaults.retryableDelay).toBe(150, 'Expected retryableDelay prop default %s to be %s');
+			expect(streamDefaults.maxBatchCount).toBe(10000, 'Expected maxBatchCount prop default %s to be %s');
 			expect(streamDefaults.maxBatchSize).toBe(1048576, 'Expected maxBatchSize prop default %s to be %s');
 			expect(streamDefaults.onError).toBe(CWLogsWritable.prototype.onError, 'Expected onError prop default %s to be %s');
 			expect(streamDefaults.filterWrite).toBe(CWLogsWritable.prototype.filterWrite, 'Expected filterWrite prop default %s to be %s');
@@ -271,6 +303,7 @@ describe('CWLogsWritable', function() {
 				writeInterval: 500,
 				retryableMax: 600,
 				retryableDelay: 700,
+				maxBatchCount: 1000,
 				maxBatchSize: 1000000,
 				onError: onError,
 				filterWrite: filterWrite
@@ -279,6 +312,7 @@ describe('CWLogsWritable', function() {
 			expect(streamOverrides.writeInterval).toBe(500, 'Expected writeInterval prop %s to be %s');
 			expect(streamOverrides.retryableMax).toBe(600, 'Expected retryableMax prop %s to be %s');
 			expect(streamOverrides.retryableDelay).toBe(700, 'Expected retryableDelay prop %s to be %s');
+			expect(streamOverrides.maxBatchCount).toBe(1000, 'Expected maxBatchCount prop %s to be %s');
 			expect(streamOverrides.maxBatchSize).toBe(1000000, 'Expected maxBatchSize prop %s to be %s');
 			expect(streamOverrides.onError).toBe(onError, 'Expected onError prop %s to be %s');
 			expect(streamOverrides.filterWrite).toBe(filterWrite, 'Expected filterWrite prop %s to be %s');
@@ -474,6 +508,47 @@ describe('CWLogsWritable', function() {
 
 			// Sanity check
 			expect(remainder).toBe(48576);
+
+			for (var i = 0; i < willFit; i++) {
+				stream.write(largeMessage);
+			}
+
+			stream.write(largeMessage.substr(0, remainder - overhead + 1)); // One byte over
+
+			expect(stream.queuedLogs.length).toBe(willFit + 1);
+			expect(stream.nextLogBatchSize(stream.queuedLogs)).toBe(willFit);
+			stream.queuedLogs = [];
+		});
+
+		it('should use maxBatchCount option', function() {
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar',
+				maxBatchCount: 10
+			});
+
+			for (var i = 0; i < 15; i++) {
+				stream.write('---');
+			}
+
+			expect(stream.queuedLogs.length).toBe(15);
+			expect(stream.nextLogBatchSize(stream.queuedLogs)).toBe(10);
+			stream.queuedLogs = [];
+		});
+
+		it('should use maxBatchSize option', function() {
+			var maxSize = (largeMessage.length + overhead) * 3 + 1000;
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar',
+				maxBatchSize: maxSize
+			});
+
+			var willFit = Math.floor(maxSize / (overhead + largeMessage.length));
+			var remainder = maxSize - willFit * (overhead + largeMessage.length);
+
+			// Sanity check
+			expect(remainder).toBe(1000);
 
 			for (var i = 0; i < willFit; i++) {
 				stream.write(largeMessage);
