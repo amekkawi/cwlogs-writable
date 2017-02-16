@@ -42,6 +42,7 @@
     "jsdoc-parse": "2.0.5",
     "minimist": "^1.2.0",
     "mocha": "^3.0.2",
+    "object-assign": "^4.1.1",
     "object-inspect": "^1.2.1",
     "proxyquire": "^1.7.11",
     "uuid": "^3.0.1"

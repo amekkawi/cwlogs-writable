@@ -1,3 +1,4 @@
+var objectAssign = require('object-assign');
 var inherits = require('util').inherits;
 var expect = require('expect');
 var Writable = require('stream').Writable;
@@ -1128,7 +1129,7 @@ describe('CWLogsWritable', function() {
 		});
 
 		it('should retry up to retryableMax on AWS errors that are "retryable"', function(done) {
-			var expectedError = Object.assign(new Error(), {
+			var expectedError = objectAssign(new Error(), {
 				retryable: true
 			});
 
@@ -1163,7 +1164,7 @@ describe('CWLogsWritable', function() {
 		});
 
 		it('should retry up using process.nextTick if retryableDelay is "nextTick"', function(done) {
-			var expectedError = Object.assign(new Error(), {
+			var expectedError = objectAssign(new Error(), {
 				retryable: true
 			});
 
@@ -1249,7 +1250,7 @@ describe('CWLogsWritable', function() {
 				cloudWatchLogsOptions: {
 					describeLogStreams: function(apiParams, cb) {
 						process.nextTick(function() {
-							cb(Object.assign(new Error(), {
+							cb(objectAssign(new Error(), {
 								name: 'ResourceNotFoundException'
 							}));
 						});
@@ -1374,7 +1375,7 @@ describe('CWLogsWritable', function() {
 				cloudWatchLogsOptions: {
 					describeLogStreams: function(apiParams, cb) {
 						process.nextTick(function() {
-							cb(Object.assign(new Error(), {
+							cb(objectAssign(new Error(), {
 								name: 'ResourceNotFoundException'
 							}));
 						});
@@ -1613,7 +1614,7 @@ function createAWSStub() {
 			}.bind(this));
 	}
 
-	Object.assign(CloudWatchLogsStub.prototype, {
+	objectAssign(CloudWatchLogsStub.prototype, {
 		describeLogStreams: function(params, cb) {
 			// console.log('describeLogStreams');
 			process.nextTick(function() {
