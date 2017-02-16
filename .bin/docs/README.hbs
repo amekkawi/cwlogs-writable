@@ -4,9 +4,11 @@ Writable stream for AWS CloudWatch Logs
 
 ## Features ##
 
+* Uses [aws-sdk](https://www.npmjs.com/package/aws-sdk).
 * Can be used anywhere Writable streams are allowed.
 * Allows for recovery from AWS errors.
-* Filter log events.
+* Creates log groups and streams if they do not exist.
+* Filtering of log events by the stream itself.
 
 ## API Docs ##
 
