@@ -2,6 +2,8 @@
 
 Writable stream for AWS CloudWatch Logs
 
+[![Build Status](https://travis-ci.org/amekkawi/cwlogs-writable.svg?branch=master)](https://travis-ci.org/amekkawi/cwlogs-writable)
+
 ## Features ##
 
 * Uses [aws-sdk](https://www.npmjs.com/package/aws-sdk).
