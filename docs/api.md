@@ -3,7 +3,7 @@
 ## CWLogsWritable ⇐ <code>Writable</code>
 **Kind**: global class  
 **Extends:** <code>Writable</code>  
-**Emits**: <code>[putLogEvents](#CWLogsWritable+event_putLogEvents)</code>, <code>[createLogGroup](#CWLogsWritable+event_createLogGroup)</code>, <code>[createLogStream](#CWLogsWritable+event_createLogStream)</code>  
+**Emits**: <code>[putLogEvents](#CWLogsWritable+event_putLogEvents)</code>, <code>[createLogGroup](#CWLogsWritable+event_createLogGroup)</code>, <code>[createLogStream](#CWLogsWritable+event_createLogStream)</code>, <code>[stringifyError](#CWLogsWritable+event_stringifyError)</code>  
 
 * [CWLogsWritable](#CWLogsWritable) ⇐ <code>Writable</code>
     * [new CWLogsWritable(options)](#new_CWLogsWritable_new)
@@ -22,6 +22,7 @@
     * ["putLogEvents" (logEvents)](#CWLogsWritable+event_putLogEvents)
     * ["createLogGroup"](#CWLogsWritable+event_createLogGroup)
     * ["createLogStream"](#CWLogsWritable+event_createLogStream)
+    * ["stringifyError" (err, rec)](#CWLogsWritable+event_stringifyError)
 
 <a name="new_CWLogsWritable_new"></a>
 
@@ -221,3 +222,14 @@ Fired on successful CreateLogGroup API call.
 Fired on successful CreateLogStream API call.
 
 **Kind**: event emitted by <code>[CWLogsWritable](#CWLogsWritable)</code>  
+<a name="CWLogsWritable+event_stringifyError"></a>
+
+### "stringifyError" (err, rec)
+Fired when an error is thrown while stringifying a log event.
+
+**Kind**: event emitted by <code>[CWLogsWritable](#CWLogsWritable)</code>  
+**Params**
+
+- err <code>Error</code>
+- rec <code>object</code> | <code>string</code>
+

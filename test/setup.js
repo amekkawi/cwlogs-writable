@@ -1,3 +1,5 @@
+'use strict';
+
 var expect = require('expect');
 var TestUtils = require('expect/lib/TestUtils');
 var inspect = require('object-inspect');

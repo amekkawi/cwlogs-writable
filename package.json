@@ -46,5 +46,8 @@
     "object-inspect": "^1.2.1",
     "proxyquire": "^1.7.11",
     "uuid": "^3.0.1"
+  },
+  "optionalDependencies": {
+    "safe-json-stringify": "^1.0.4"
   }
 }

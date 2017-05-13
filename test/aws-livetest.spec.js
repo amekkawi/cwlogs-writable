@@ -1,3 +1,5 @@
+'use strict';
+
 var expect = require('expect');
 var fs = require('fs');
 var path = require('path');

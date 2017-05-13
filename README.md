@@ -11,6 +11,7 @@ Writable stream for AWS CloudWatch Logs
 * Allows for recovery from AWS errors.
 * Creates log groups and streams if they do not exist.
 * Filtering of log events by the stream itself.
+* Safe stringification of log events.
 
 ## API Docs ##
 

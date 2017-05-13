@@ -3,7 +3,7 @@
 ## CWLogsWritable ⇐ <code>Writable</code>
 **Kind**: global class  
 **Extends:** <code>Writable</code>  
-**Emits**: <code>[putLogEvents](#CWLogsWritable+event_putLogEvents)</code>, <code>[createLogGroup](#CWLogsWritable+event_createLogGroup)</code>, <code>[createLogStream](#CWLogsWritable+event_createLogStream)</code>  
+**Emits**: <code>[putLogEvents](#CWLogsWritable+event_putLogEvents)</code>, <code>[createLogGroup](#CWLogsWritable+event_createLogGroup)</code>, <code>[createLogStream](#CWLogsWritable+event_createLogStream)</code>, <code>[stringifyError](#CWLogsWritable+event_stringifyError)</code>  
 
 * [CWLogsWritable](#CWLogsWritable) ⇐ <code>Writable</code>
     * [new CWLogsWritable(options)](#new_CWLogsWritable_new)
@@ -20,6 +20,7 @@
     * [.getQueueSize()](#CWLogsWritable+getQueueSize) ⇒ <code>number</code>
     * [.clearQueue()](#CWLogsWritable+clearQueue) ⇒ <code>Array.&lt;{message:string, timestamp:number}&gt;</code>
     * [.createLogEvent(rec)](#CWLogsWritable+createLogEvent) ⇒ <code>Object</code>
+    * [.safeStringifyLogEvent(rec)](#CWLogsWritable+safeStringifyLogEvent) ⇒ <code>string</code>
     * [.onError(err, logEvents, next)](#CWLogsWritable+onError)
     * [.filterWrite(rec)](#CWLogsWritable+filterWrite) ⇒ <code>boolean</code>
     * [.createService(opts)](#CWLogsWritable+createService) ⇒ <code>CloudWatchLogs</code>
@@ -28,6 +29,7 @@
     * ["putLogEvents" (logEvents)](#CWLogsWritable+event_putLogEvents)
     * ["createLogGroup"](#CWLogsWritable+event_createLogGroup)
     * ["createLogStream"](#CWLogsWritable+event_createLogStream)
+    * ["stringifyError" (err, rec)](#CWLogsWritable+event_stringifyError)
 
 <a name="new_CWLogsWritable_new"></a>
 
@@ -160,6 +162,17 @@ Create a log event object from the log record.
 **Params**
 
 - rec <code>object</code> | <code>string</code>
+
+<a name="CWLogsWritable+safeStringifyLogEvent"></a>
+
+### cwLogsWritable.safeStringifyLogEvent(rec) ⇒ <code>string</code>
+Safe stringify a log record. Use by [createLogEvent](#CWLogsWritable+createLogEvent).
+
+**Kind**: instance method of <code>[CWLogsWritable](#CWLogsWritable)</code>  
+**Access:** protected  
+**Params**
+
+- rec <code>\*</code>
 
 <a name="CWLogsWritable+onError"></a>
 
@@ -310,3 +323,14 @@ Fired on successful CreateLogGroup API call.
 Fired on successful CreateLogStream API call.
 
 **Kind**: event emitted by <code>[CWLogsWritable](#CWLogsWritable)</code>  
+<a name="CWLogsWritable+event_stringifyError"></a>
+
+### "stringifyError" (err, rec)
+Fired when an error is thrown while stringifying a log event.
+
+**Kind**: event emitted by <code>[CWLogsWritable](#CWLogsWritable)</code>  
+**Params**
+
+- err <code>Error</code>
+- rec <code>object</code> | <code>string</code>
+

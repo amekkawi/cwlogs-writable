@@ -1,3 +1,5 @@
+'use strict';
+
 var objectAssign = require('object-assign');
 var inherits = require('util').inherits;
 var expect = require('expect');
@@ -6,8 +8,15 @@ var proxyquire = require('proxyquire');
 
 describe('CWLogsWritable', function() {
 	var noop = function() {};
+	var safeStringifyStub = {
+		fastAndSafeJsonStringify: expect.createSpy()
+			.andCall(function(obj) {
+				return JSON.stringify(obj);
+			})
+	};
 	var CWLogsWritable = proxyquire('../lib/index', {
-		'aws-sdk': createAWSStub()
+		'aws-sdk': createAWSStub(),
+		'./safe-stringify': safeStringifyStub
 	});
 
 	afterEach(function () {
@@ -391,6 +400,23 @@ describe('CWLogsWritable', function() {
 		});
 	});
 
+	describe('CWLogsWritable#safeStringifyLogEvent', function() {
+		it('should call fastAndSafeJsonStringify to stringify log record', function() {
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			});
+
+			var expectedRecord = { foo: 'bar' };
+			var ret = stream.safeStringifyLogEvent(expectedRecord);
+
+			expect(safeStringifyStub.fastAndSafeJsonStringify.calls.length).toBe(1);
+			expect(safeStringifyStub.fastAndSafeJsonStringify.calls[0].arguments.length).toBe(1);
+			expect(safeStringifyStub.fastAndSafeJsonStringify.calls[0].arguments[0]).toBe(expectedRecord);
+			expect(ret).toBe('{"foo":"bar"}');
+		});
+	});
+
 	describe('CWLogsWritable#createLogEvent', function() {
 		it('should return a log event', function() {
 			var stream = new CWLogsWritable({
@@ -398,8 +424,12 @@ describe('CWLogsWritable', function() {
 				logStreamName: 'bar'
 			});
 
+			var safeStringifyLogEventSpy = expect.spyOn(stream, 'safeStringifyLogEvent')
+
 			var now = Date.now();
 			var logEvent = stream.createLogEvent('foo');
+
+			expect(safeStringifyLogEventSpy.calls.length).toBe(0);
 
 			expect(Object.keys(logEvent).sort()).toEqual(['message', 'timestamp']);
 			expect(logEvent.message).toBe('foo');
@@ -409,16 +439,23 @@ describe('CWLogsWritable', function() {
 		});
 
 		it('should stringify non-string log records', function() {
+			var expectedRec = { foo: 'bar' };
 			var stream = new CWLogsWritable({
 				logGroupName: 'foo',
 				logStreamName: 'bar'
 			});
 
-			var now = Date.now();
-			var logEvent = stream.createLogEvent({ foo: 'bar' });
+			var safeStringifyLogEventSpy = expect.spyOn(stream, 'safeStringifyLogEvent')
+				.andReturn('["foo","bar"]');
+
+			var logEvent = stream.createLogEvent(expectedRec);
+
+			expect(safeStringifyLogEventSpy.calls.length).toBe(1);
+			expect(safeStringifyLogEventSpy.calls[0].arguments.length).toBe(1);
+			expect(safeStringifyLogEventSpy.calls[0].arguments[0]).toBe(expectedRec);
 
 			expect(Object.keys(logEvent).sort()).toEqual(['message', 'timestamp']);
-			expect(logEvent.message).toBe('{"foo":"bar"}');
+			expect(logEvent.message).toBe('["foo","bar"]');
 		});
 
 		it('should get timestamp from "time" prop on object log records', function() {
@@ -707,6 +744,33 @@ describe('CWLogsWritable', function() {
 			expect(stream.queuedLogs.length).toBe(1);
 			expect(stream.writeQueued).toBe(true);
 			expect(stream._scheduleSendLogs.calls.length).toBe(1);
+		});
+
+		it('should emit "stringifyError" event if createLogEvent throws error', function() {
+			var expectedRecord = { expected: 'record' };
+			var expectedError = new Error('expected-error');
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			});
+
+			var eventSpy = expect.createSpy().andCall(function() {
+				expect(stream._scheduleSendLogs.calls.length).toBe(0);
+			});
+			stream.on('stringifyError', eventSpy);
+
+			stream._scheduleSendLogs = expect.createSpy();
+			stream.createLogEvent = expect.createSpy()
+				.andThrow(expectedError);
+
+			stream._write(expectedRecord, null, noop);
+			expect(eventSpy.calls.length).toBe(1);
+			expect(eventSpy.calls[0].arguments.length).toBe(2);
+			expect(eventSpy.calls[0].arguments[0]).toBe(expectedError);
+			expect(eventSpy.calls[0].arguments[0].message).toBe('Error while stringifying record (install safe-json-stringify to fallback to safer stringification) -- expected-error');
+			expect(eventSpy.calls[0].arguments[1]).toBe(expectedRecord);
+			expect(stream._scheduleSendLogs.calls.length).toBe(1);
+			expect(stream.writeQueued).toBe(true);
 		});
 	});
 
