@@ -1,9 +1,22 @@
 # cwlogs-writable #
 
-Writable stream for AWS CloudWatch Logs
+Writable stream for AWS CloudWatch Logs, inspired by [bunyan-cloudwatch](https://github.com/mirkokiefer/bunyan-cloudwatch).
 
 [![Build Status](https://travis-ci.org/amekkawi/cwlogs-writable.svg?branch=master)](https://travis-ci.org/amekkawi/cwlogs-writable)
 
+* [Features](#features)
+* [API Docs](#api-docs)
+* [Quick Start](#quick-start)
+* [Bunyan Example](#bunyan-example)
+* [Picking LogStream Names](#logstream-names)
+* [Recovering from AWS Errors](#error-recovery)
+* [CWLogsWritable Options](#options)
+* [Change Log](#changelog)
+* [License](#license)
+
+---
+
+<a name="features"></a>
 ## Features ##
 
 * Uses [aws-sdk](https://www.npmjs.com/package/aws-sdk).
