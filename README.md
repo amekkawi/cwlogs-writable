@@ -26,6 +26,7 @@ Writable stream for AWS CloudWatch Logs, inspired by [bunyan-cloudwatch](https:/
 * Filtering of log events by the stream itself.
 * Safe stringification of log events.
 
+<a name="api-docs"></a>
 ## API Docs ##
 
 There are two forms of the API docs:
@@ -35,6 +36,7 @@ There are two forms of the API docs:
 * [Extended API docs](docs/api-protected.md) - Use this to also view
   `protected` methods that you can use to customize/extend cwlogs-writable.
 
+<a name="quick-start"></a>
 ## Quick Start ##
 
 Install the library using NPM into your existing node project:
@@ -70,6 +72,7 @@ var stream = new CWLogsWritable({
 stream.write('example-log-message');
 ```
 
+<a name="bunyan-example"></a>
 ## Bunyan Example ##
 
 ```javascript
@@ -100,6 +103,7 @@ var logger = bunyan.createLogger({
 });
 ```
 
+<a name="logstream-names"></a>
 ## Picking LogStream Names ##
 
 In AWS CloudWatch Logs a LogStream represents "a sequence of log events from a
@@ -140,6 +144,7 @@ var logStreamName = [
 ].filter(Boolean).join('/').replace(/[:*]/g, '');
 ```
 
+<a name="error-recovery"></a>
 ## Recovering from AWS Errors ##
 
 When an AWS error is encounted, the default behavior of a CWLogsWritable
@@ -196,6 +201,7 @@ var stream = new CWLogsWritable({
 });
 ```
 
+<a name="options"></a>
 ## CWLogsWritable Options ##
 
 - **logGroupName**
@@ -280,10 +286,12 @@ var stream = new CWLogsWritable({
 
    Passed to the Writable constructor. See https://nodejs.org/api/stream.html#stream_object_mode.
 
+<a name="changelog"></a>
 ## Change Log ##
 
 See [CHANGELOG.md](CHANGELOG.md)
 
+<a name="license"></a>
 ## License ##
 
 The MIT License (MIT)
