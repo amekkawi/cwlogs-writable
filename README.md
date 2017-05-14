@@ -35,9 +35,13 @@ Create and write to the stream.
 ```javascript
 var CWLogsWritable = require('cwlogs-writable');
 
+// Make stream name as unique as possible (see "Picking LogStream Names").
+var streamName = 'my-log-stream/' + Date.now()
+  + '/' + Math.round(Math.random() * 4026531839 + 268435456).toString(16);
+
 var stream = new CWLogsWritable({
   logGroupName: 'my-aws-log-group',
-  logStreamName: 'my-log-stream',
+  logStreamName: streamName,
 
   // Options passed to the AWS.CloudWatchLogs service.
   cloudWatchLogsOptions: {
@@ -59,6 +63,10 @@ stream.write('example-log-message');
 var bunyan = require('bunyan');
 var CWLogsWritable = require('cwlogs-writable');
 
+// Make stream name as unique as possible (see "Picking LogStream Names").
+var streamName = 'my-log-stream/' + Date.now()
+  + '/' + Math.round(Math.random() * 4026531839 + 268435456).toString(16);
+
 var logger = bunyan.createLogger({
   name: 'foo',
   streams: [
@@ -71,12 +79,52 @@ var logger = bunyan.createLogger({
 
       stream: new CWLogsWritable({
         logGroupName: 'my-aws-log-group',
-        logStreamName: 'my-log-stream',
+        logStreamName: streamName,
         cloudWatchLogsOptions: { /* ... */ }
       })
     }
   ]
 });
+```
+
+## Picking LogStream Names ##
+
+In AWS CloudWatch Logs a LogStream represents "a sequence of log events from a
+single emitter of logs".
+
+The important part is "single emitter", as this implies that log events should
+not be put into a LogStream concurrently by multiple emitters.
+
+This is enforced by the [PutLogEvents API action](http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
+which requires each call to include a "sequenceToken". That token is changed
+each time a call is successful, and the new token is used for the next call.
+
+If an emitter provides an incorrect token, the API will respond with
+an __InvalidSequenceTokenException__.
+
+To avoid this error, you must pick LogStream names that are unique to the
+emitter or at least include enough randomness.
+
+```javascript
+// Example generation of LogStream name
+var logStreamName = [
+
+  // Environment identifier (e.g. "production")
+  process.env.NODE_ENV || 'development',
+
+  // Current UTC date
+  new Date().toISOString().substr(0, 10),
+
+  // EC2 instance ID, optionally provided as an env variable
+  process.env.EC2_INSTANCE_ID || null,
+
+  // Process ID
+  'p' + process.pid,
+
+  // Random hex string (from "10000000" to "ffffffff")
+  Math.round(Math.random() * 4026531839 + 268435456).toString(16),
+
+].filter(Boolean).join('/').replace(/[:*]/g, '');
 ```
 
 ## Recovering from AWS Errors ##
@@ -121,9 +169,13 @@ function onError(err, logEvents, next) {
   }
 }
 
+// Make stream name as unique as possible (see "Picking LogStream Names").
+var streamName = 'my-log-stream/' + Date.now()
+  + '/' + Math.round(Math.random() * 4026531839 + 268435456).toString(16);
+
 var stream = new CWLogsWritable({
   logGroupName: 'my-aws-log-group',
-  logStreamName: 'my-log-stream',
+  logStreamName: streamName,
   cloudWatchLogsOptions: { /* ... */ },
 
   // Pass the onError callback to CWLogsWritable
