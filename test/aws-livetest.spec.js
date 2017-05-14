@@ -10,7 +10,7 @@ describe('AWS Live Test', function() {
 
 	var CWLogsWritable = require('../lib/index');
 	var logGroupName = process.env.LOG_GROUP_NAME;
-	var logStreamName = 'foo' || process.env.LOG_STREAM_NAME;
+	var logStreamName = process.env.LOG_STREAM_NAME;
 	var region = process.env.AWS_REGION || 'us-east-1';
 	var accessKeyId = process.env.AWS_ACCESS_KEY_ID;
 	var secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
@@ -142,5 +142,106 @@ describe('AWS Live Test', function() {
 		for (var i = 0; i < 10000; i++) {
 			stream.write('i:' + i);
 		}
+	});
+
+	it('should catch InvalidSequenceTokenException in onError handler', function(done) {
+		var errorEventSpy = expect.createSpy()
+			.andCall(function() {
+				done();
+			});
+
+		var onErrorSpy = expect.createSpy()
+			.andCall(function(err, logEvents, next) {
+				try {
+					expect(errorEventSpy.calls.length).toBe(0);
+					expect(err.code).toBe('InvalidSequenceTokenException');
+				}
+				catch (err) {
+					done(err);
+					return;
+				}
+
+				next(err);
+			});
+
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			onError: onErrorSpy,
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: accessKeyId,
+				secretAccessKey: secretAccessKey
+			}
+		});
+
+		stream.on('error', errorEventSpy);
+
+		stream.write('foo');
+
+		stream.once('putLogEvents', function(logEvents) {
+			expect(logEvents.length).toBe(1);
+			expect(this.queuedLogs.length).toBe(0);
+
+			// Force an invalid sequence token
+			stream.sequenceToken = 'invalid-token';
+
+			stream.write('bar');
+
+			stream.once('putLogEvents', function() {
+				done(new Error('Expected putLogEvents not to be fired'));
+			});
+		});
+	});
+
+	it('should catch DataAlreadyAcceptedException in onError handler', function(done) {
+		var errorEventSpy = expect.createSpy()
+			.andCall(function() {
+				done();
+			});
+
+		var onErrorSpy = expect.createSpy()
+			.andCall(function(err, logEvents, next) {
+				try {
+					expect(errorEventSpy.calls.length).toBe(0);
+					expect(err.code).toBe('DataAlreadyAcceptedException');
+				}
+				catch (err) {
+					done(err);
+					return;
+				}
+
+				next(err);
+			});
+
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			onError: onErrorSpy,
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: accessKeyId,
+				secretAccessKey: secretAccessKey
+			}
+		});
+
+		stream.on('error', errorEventSpy);
+
+		stream.write('foo');
+
+		var seqToken;
+		stream.once('putLogEvents', function(logEvents) {
+			// Copy the seq token so it is reused.
+			seqToken = stream.sequenceToken;
+
+			stream.write('bar');
+
+			stream.once('putLogEvents', function() {
+				stream.sequenceToken = seqToken;
+
+				// Send the same message again.
+				stream.write('bar');
+			});
+		});
 	});
 });
