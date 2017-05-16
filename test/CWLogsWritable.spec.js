@@ -19,7 +19,7 @@ describe('CWLogsWritable', function() {
 		'./safe-stringify': safeStringifyStub
 	});
 
-	afterEach(function () {
+	afterEach(function() {
 		expect.restoreSpies();
 	});
 
@@ -695,7 +695,7 @@ describe('CWLogsWritable', function() {
 						expect(stream._sendLogs.calls.length).toBe(1);
 						expect(stream._sendLogs.calls[0].arguments.length).toBe(0);
 						done();
-					})
+					});
 				});
 
 			stream._scheduleSendLogs();
@@ -925,11 +925,11 @@ describe('CWLogsWritable', function() {
 			stream.sequenceToken = 'foo-token';
 
 			stream._getSequenceToken = function() {
-				throw new Error('Expected not to be called')
+				throw new Error('Expected not to be called');
 			};
 
 			stream.nextLogBatchSize = function() {
-				throw new Error('Expected not to be called')
+				throw new Error('Expected not to be called');
 			};
 
 			stream._sendLogs();
@@ -952,11 +952,11 @@ describe('CWLogsWritable', function() {
 			stream.on('putLogEvents', putLogEventsEventSpy);
 
 			stream._scheduleSendLogs = function() {
-				throw new Error('Expected not to be called')
+				throw new Error('Expected not to be called');
 			};
 
 			stream._getSequenceToken = function() {
-				throw new Error('Expected not to be called')
+				throw new Error('Expected not to be called');
 			};
 
 			var nextLogBatchSizeSpy = expect.spyOn(stream, 'nextLogBatchSize').andCall(function() {
@@ -1021,11 +1021,11 @@ describe('CWLogsWritable', function() {
 			stream.sequenceToken = 'seq';
 
 			stream._scheduleSendLogs = function() {
-				throw new Error('Expected not to be called')
+				throw new Error('Expected not to be called');
 			};
 
 			stream._getSequenceToken = function() {
-				throw new Error('Expected not to be called')
+				throw new Error('Expected not to be called');
 			};
 
 			stream._putLogEvents = function(params, cb) {
@@ -1080,7 +1080,7 @@ describe('CWLogsWritable', function() {
 			stream._scheduleSendLogs = expect.createSpy();
 
 			stream._getSequenceToken = function() {
-				throw new Error('Expected not to be called')
+				throw new Error('Expected not to be called');
 			};
 
 			stream.nextLogBatchSize = function() {
@@ -1350,7 +1350,7 @@ describe('CWLogsWritable', function() {
 				logStreamName: 'BAR'
 			});
 
-			stream._getSequenceToken('foo', 'bar', function(err, seq) {
+			stream._getSequenceToken('foo', 'bar', function() {
 				expect(stream.cloudwatch.describeLogStreams.calls.length).toBe(1);
 
 				var calls0 = stream.cloudwatch.describeLogStreams.calls[0];

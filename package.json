@@ -21,7 +21,7 @@
     "docs-api-protected": "node .bin/docs/index.js docs/api-protected.md --overwrite --protected --unified",
     "test": "mocha --bail --require ./test/setup.js ./test/index.js",
     "test-live": "mocha --bail --require ./test/setup.js ./test/aws-livetest.spec.js",
-    "lint": "eslint lib"
+    "lint": "eslint ."
   },
   "keywords": [
     "aws",

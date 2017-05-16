@@ -1,8 +1,6 @@
 'use strict';
 
 var expect = require('expect');
-var fs = require('fs');
-var path = require('path');
 
 describe('AWS Live Test', function() {
 	this.slow(2000);
@@ -15,7 +13,7 @@ describe('AWS Live Test', function() {
 	var accessKeyId = process.env.AWS_ACCESS_KEY_ID;
 	var secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
-	afterEach(function () {
+	afterEach(function() {
 		expect.restoreSpies();
 	});
 

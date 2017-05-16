@@ -1,6 +1,5 @@
 'use strict';
 
-var objectAssign = require('object-assign');
 var expect = require('expect');
 var proxyquire = require('proxyquire');
 
@@ -11,7 +10,7 @@ describe('safe-stringify', function() {
 		});
 	}
 
-	afterEach(function () {
+	afterEach(function() {
 		expect.restoreSpies();
 	});
 
