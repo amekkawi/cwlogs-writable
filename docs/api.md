@@ -60,26 +60,34 @@ var stream = new CWLogsWritable({
 <a name="CWLogsWritable+logGroupName"></a>
 
 ### cwLogsWritable.logGroupName : <code>string</code>
-AWS CloudWatch [LogGroup](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) name. It will be created if it doesn't exist.
+AWS CloudWatch [LogGroup](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) name.
+The LogGroup will be created if it doesn't exist.
+Changes to this property will only take affect for the next PutLogEvents API call.
 
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 <a name="CWLogsWritable+logStreamName"></a>
 
 ### cwLogsWritable.logStreamName : <code>string</code>
-AWS CloudWatch [LogStream](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) name. It will be created if it doesn't exist.
+AWS CloudWatch [LogStream](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) name.
+The LogStream will be created if it doesn't exist.
+Changes to this property will only take affect for the next PutLogEvents API call.
 
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 <a name="CWLogsWritable+writeInterval"></a>
 
 ### cwLogsWritable.writeInterval : <code>string</code> &#124; <code>number</code>
-Amount of wait time after a Writable#_write call to allow batching of log events. Must be a positive number or "nextTick". If "nextTick", `process.nextTick` is used. If a number, `setTimeout` is used.
+Amount of wait time after a Writable#_write call to allow batching of
+log events. Must be a positive number or "nextTick".
+If "nextTick", `process.nextTick` is used.
+If a number, `setTimeout` is used.
 
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 **Default**: <code>&quot;nextTick&quot;</code>  
 <a name="CWLogsWritable+retryableMax"></a>
 
 ### cwLogsWritable.retryableMax : <code>number</code>
-Maximum number of times a AWS error marked as "retryable" will be retried before the error is instead passed to [onError](#CWLogsWritable+onError).
+Maximum number of times a AWS error marked as "retryable" will be
+retried before the error is instead passed to [onError](#CWLogsWritable+onError).
 
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 **Default**: <code>100</code>  

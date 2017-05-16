@@ -328,6 +328,58 @@ describe('CWLogsWritable', function() {
 			expect(streamOverrides.filterWrite).toBe(filterWrite, 'Expected filterWrite prop %s to be %s');
 		});
 
+		it('should reset sequenceToken when logGroupName is changed', function() {
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			});
+
+			stream.sequenceToken = 'next-token';
+			expect(stream.sequenceToken).toBe('next-token');
+
+			stream.logGroupName = 'foo-group';
+			expect(stream.sequenceToken).toBe(null);
+		});
+
+		it('should not reset sequenceToken when logGroupName is set but not changed', function() {
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			});
+
+			stream.sequenceToken = 'next-token';
+			expect(stream.sequenceToken).toBe('next-token');
+
+			stream.logGroupName = 'foo';
+			expect(stream.sequenceToken).toBe('next-token');
+		});
+
+		it('should reset sequenceToken when logStreamName is changed', function() {
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			});
+
+			stream.sequenceToken = 'next-token';
+			expect(stream.sequenceToken).toBe('next-token');
+
+			stream.logStreamName = 'bar-stream';
+			expect(stream.sequenceToken).toBe(null);
+		});
+
+		it('should not reset sequenceToken when logStreamName is set but not changed', function() {
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			});
+
+			stream.sequenceToken = 'next-token';
+			expect(stream.sequenceToken).toBe('next-token');
+
+			stream.logStreamName = 'bar';
+			expect(stream.sequenceToken).toBe('next-token');
+		});
+
 		it('should call createService and pass cloudWatchLogsOptions option', function() {
 			inherits(Child, CWLogsWritable);
 			function Child(options) {
@@ -424,7 +476,7 @@ describe('CWLogsWritable', function() {
 				logStreamName: 'bar'
 			});
 
-			var safeStringifyLogEventSpy = expect.spyOn(stream, 'safeStringifyLogEvent')
+			var safeStringifyLogEventSpy = expect.spyOn(stream, 'safeStringifyLogEvent');
 
 			var now = Date.now();
 			var logEvent = stream.createLogEvent('foo');
@@ -600,31 +652,34 @@ describe('CWLogsWritable', function() {
 	});
 
 	describe('CWLogsWritable#_scheduleSendLogs', function() {
-		it('should call process.nextTick if writeInterval is "nextTick"', function() {
+		it('should call process.nextTick if writeInterval is "nextTick"', function(done) {
 			var stream = new CWLogsWritable({
 				logGroupName: 'foo',
 				logStreamName: 'bar',
 				writeInterval: 'nextTick'
 			});
 
+			var origNextTick = process.nextTick.bind(process);
 			var nextTickSpy = expect.spyOn(process, 'nextTick').andCallThrough();
 
-			return new Promise(function(resolve) {
-				stream._sendLogs = expect.createSpy().andCall(resolve);
-				stream._scheduleSendLogs();
-				expect(nextTickSpy.calls.length).toBe(1);
-				expect(nextTickSpy.calls[0].arguments.length).toBe(1);
-				expect(nextTickSpy.calls[0].arguments[0]).toBeA('function');
-				expect(stream._sendLogs.calls.length).toBe(0);
-			})
-				.then(function() {
-					expect(nextTickSpy.calls.length).toBe(1);
-					expect(stream._sendLogs.calls.length).toBe(1);
-					expect(stream._sendLogs.calls[0].arguments.length).toBe(0);
+			stream._sendLogs = expect.createSpy()
+				.andCall(function() {
+					origNextTick(function() {
+						expect(nextTickSpy.calls.length).toBe(1);
+						expect(stream._sendLogs.calls.length).toBe(1);
+						expect(stream._sendLogs.calls[0].arguments.length).toBe(0);
+						done();
+					});
 				});
+
+			stream._scheduleSendLogs();
+			expect(nextTickSpy.calls.length).toBe(1);
+			expect(nextTickSpy.calls[0].arguments.length).toBe(1);
+			expect(nextTickSpy.calls[0].arguments[0]).toBeA('function');
+			expect(stream._sendLogs.calls.length).toBe(0);
 		});
 
-		it('should call setTimeout if writeInterval is a number', function() {
+		it('should call setTimeout if writeInterval is a number', function(done) {
 			var stream = new CWLogsWritable({
 				logGroupName: 'foo',
 				logStreamName: 'bar',
@@ -633,20 +688,22 @@ describe('CWLogsWritable', function() {
 
 			var setTimeoutSpy = expect.spyOn(global, 'setTimeout').andCallThrough();
 
-			return new Promise(function(resolve) {
-				stream._sendLogs = expect.createSpy().andCall(resolve);
-				stream._scheduleSendLogs();
-				expect(setTimeoutSpy.calls.length).toBe(1);
-				expect(setTimeoutSpy.calls[0].arguments.length).toBe(2);
-				expect(setTimeoutSpy.calls[0].arguments[0]).toBeA('function');
-				expect(setTimeoutSpy.calls[0].arguments[1]).toBe(10);
-				expect(stream._sendLogs.calls.length).toBe(0);
-			})
-				.then(function() {
-					expect(setTimeoutSpy.calls.length).toBe(1);
-					expect(stream._sendLogs.calls.length).toBe(1);
-					expect(stream._sendLogs.calls[0].arguments.length).toBe(0);
+			stream._sendLogs = expect.createSpy()
+				.andCall(function() {
+					process.nextTick(function() {
+						expect(setTimeoutSpy.calls.length).toBe(1);
+						expect(stream._sendLogs.calls.length).toBe(1);
+						expect(stream._sendLogs.calls[0].arguments.length).toBe(0);
+						done();
+					})
 				});
+
+			stream._scheduleSendLogs();
+			expect(setTimeoutSpy.calls.length).toBe(1);
+			expect(setTimeoutSpy.calls[0].arguments.length).toBe(2);
+			expect(setTimeoutSpy.calls[0].arguments[0]).toBeA('function');
+			expect(setTimeoutSpy.calls[0].arguments[1]).toBe(10);
+			expect(stream._sendLogs.calls.length).toBe(0);
 		});
 	});
 
@@ -788,8 +845,10 @@ describe('CWLogsWritable', function() {
 
 			stream._sendLogs();
 			expect(getSequenceTokenSpy.calls.length).toBe(1);
-			expect(getSequenceTokenSpy.calls[0].arguments.length).toBe(1);
-			expect(getSequenceTokenSpy.calls[0].arguments[0]).toBeA('function');
+			expect(getSequenceTokenSpy.calls[0].arguments.length).toBe(3);
+			expect(getSequenceTokenSpy.calls[0].arguments[0]).toBe('foo');
+			expect(getSequenceTokenSpy.calls[0].arguments[1]).toBe('bar');
+			expect(getSequenceTokenSpy.calls[0].arguments[2]).toBeA('function');
 			expect(nextLogBatchSizeSpy.calls.length).toBe(0);
 
 			// Intercept _sendLogs call after the sequence is fetched.
@@ -844,8 +903,10 @@ describe('CWLogsWritable', function() {
 
 			stream._sendLogs();
 			expect(getSequenceTokenSpy.calls.length).toBe(1);
-			expect(getSequenceTokenSpy.calls[0].arguments.length).toBe(1);
-			expect(getSequenceTokenSpy.calls[0].arguments[0]).toBeA('function');
+			expect(getSequenceTokenSpy.calls[0].arguments.length).toBe(3);
+			expect(getSequenceTokenSpy.calls[0].arguments[0]).toBe('foo');
+			expect(getSequenceTokenSpy.calls[0].arguments[1]).toBe('bar');
+			expect(getSequenceTokenSpy.calls[0].arguments[2]).toBeA('function');
 			expect(nextLogBatchSizeSpy.calls.length).toBe(0);
 
 			// Intercept _sendLogs call after the sequence is fetched.
@@ -1285,11 +1346,11 @@ describe('CWLogsWritable', function() {
 	describe('CWLogsWritable#_getSequenceToken', function() {
 		it('should return next sequence token', function(done) {
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar'
+				logGroupName: 'FOO',
+				logStreamName: 'BAR'
 			});
 
-			stream._getSequenceToken(function(err, seq) {
+			stream._getSequenceToken('foo', 'bar', function(err, seq) {
 				expect(stream.cloudwatch.describeLogStreams.calls.length).toBe(1);
 
 				var calls0 = stream.cloudwatch.describeLogStreams.calls[0];
@@ -1309,8 +1370,8 @@ describe('CWLogsWritable', function() {
 
 		it('should call _createLogGroupAndStream for "ResourceNotFoundException" errors and call _getSequenceToken again', function(done) {
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar',
+				logGroupName: 'FOO',
+				logStreamName: 'BAR',
 				cloudWatchLogsOptions: {
 					describeLogStreams: function(apiParams, cb) {
 						process.nextTick(function() {
@@ -1326,21 +1387,26 @@ describe('CWLogsWritable', function() {
 				throw new Error('Expected not to be called');
 			};
 
-			var createLogGroupAndStreamSpy = expect.spyOn(stream, '_createLogGroupAndStream').andCall(function(cb) {
-				process.nextTick(function() {
-					cb();
+			var createLogGroupAndStreamSpy = expect.spyOn(stream, '_createLogGroupAndStream')
+				.andCall(function(logGroupName, logStreamName, cb) {
+					process.nextTick(function() {
+						cb();
+					});
 				});
-			});
 
 			stream._getSequenceToken = function() {
 				// Override _getSequenceToken for the second call.
 				stream._getSequenceToken = function() {
 					expect(createLogGroupAndStreamSpy.calls.length).toBe(1);
-					expect(createLogGroupAndStreamSpy.calls[0].arguments.length).toBe(1);
-					expect(createLogGroupAndStreamSpy.calls[0].arguments[0]).toBeA('function');
+					expect(createLogGroupAndStreamSpy.calls[0].arguments.length).toBe(3);
+					expect(createLogGroupAndStreamSpy.calls[0].arguments[0]).toBe('foo');
+					expect(createLogGroupAndStreamSpy.calls[0].arguments[1]).toBe('bar');
+					expect(createLogGroupAndStreamSpy.calls[0].arguments[2]).toBeA('function');
 
-					expect(arguments.length).toBe(1);
-					expect(arguments[0]).toBe(cb);
+					expect(arguments.length).toBe(3);
+					expect(arguments[0]).toBe('foo');
+					expect(arguments[1]).toBe('bar');
+					expect(arguments[2]).toBe(cb);
 					done();
 				};
 
@@ -1348,13 +1414,13 @@ describe('CWLogsWritable', function() {
 				return CWLogsWritable.prototype._getSequenceToken.apply(this, arguments);
 			};
 
-			stream._getSequenceToken(cb);
+			stream._getSequenceToken('foo', 'bar', cb);
 		});
 
 		it('should call _createLogStream and emit event if no streams for group and call _getSequenceToken again', function(done) {
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar',
+				logGroupName: 'FOO',
+				logStreamName: 'BAR',
 				cloudWatchLogsOptions: {
 					describeLogStreams: function(apiParams, cb) {
 						process.nextTick(function() {
@@ -1370,11 +1436,12 @@ describe('CWLogsWritable', function() {
 				throw new Error('Expected not to be called');
 			};
 
-			var createLogStreamSpy = expect.spyOn(stream, '_createLogStream').andCall(function(cb) {
-				process.nextTick(function() {
-					cb();
+			var createLogStreamSpy = expect.spyOn(stream, '_createLogStream')
+				.andCall(function(logGroupName, logStreamName, cb) {
+					process.nextTick(function() {
+						cb();
+					});
 				});
-			});
 
 			var createLogStreamEventSpy = expect.createSpy();
 			stream.on('createLogStream', createLogStreamEventSpy);
@@ -1383,13 +1450,17 @@ describe('CWLogsWritable', function() {
 				// Override _getSequenceToken for the second call.
 				stream._getSequenceToken = function() {
 					expect(createLogStreamSpy.calls.length).toBe(1);
-					expect(createLogStreamSpy.calls[0].arguments.length).toBe(1);
-					expect(createLogStreamSpy.calls[0].arguments[0]).toBeA('function');
+					expect(createLogStreamSpy.calls[0].arguments.length).toBe(3);
+					expect(createLogStreamSpy.calls[0].arguments[0]).toBe('foo');
+					expect(createLogStreamSpy.calls[0].arguments[1]).toBe('bar');
+					expect(createLogStreamSpy.calls[0].arguments[2]).toBeA('function');
 					expect(createLogStreamEventSpy.calls.length).toBe(1);
 					expect(createLogStreamEventSpy.calls[0].arguments.length).toBe(0);
 
-					expect(arguments.length).toBe(1);
-					expect(arguments[0]).toBe(cb);
+					expect(arguments.length).toBe(3);
+					expect(arguments[0]).toBe('foo');
+					expect(arguments[1]).toBe('bar');
+					expect(arguments[2]).toBe(cb);
 					done();
 				};
 
@@ -1399,14 +1470,14 @@ describe('CWLogsWritable', function() {
 				return CWLogsWritable.prototype._getSequenceToken.apply(this, arguments);
 			};
 
-			stream._getSequenceToken(cb);
+			stream._getSequenceToken('foo', 'bar', cb);
 		});
 
 		it('should pass through error from cloudwatch.describeLogStreams', function(done) {
 			var expectedError = new Error();
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar',
+				logGroupName: 'FOO',
+				logStreamName: 'BAR',
 				cloudWatchLogsOptions: {
 					describeLogStreams: function(apiParams, cb) {
 						process.nextTick(function() {
@@ -1424,7 +1495,7 @@ describe('CWLogsWritable', function() {
 				throw new Error('Expected not to be called');
 			};
 
-			stream._getSequenceToken(function() {
+			stream._getSequenceToken('foo', 'bar', function() {
 				expect(arguments.length).toBe(1);
 				expect(arguments[0]).toBe(expectedError);
 				done();
@@ -1434,8 +1505,8 @@ describe('CWLogsWritable', function() {
 		it('should pass through error from _createLogGroupAndStream', function(done) {
 			var expectedError = new Error();
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar',
+				logGroupName: 'FOO',
+				logStreamName: 'BAR',
 				cloudWatchLogsOptions: {
 					describeLogStreams: function(apiParams, cb) {
 						process.nextTick(function() {
@@ -1447,7 +1518,7 @@ describe('CWLogsWritable', function() {
 				}
 			});
 
-			stream._createLogGroupAndStream = function(cb) {
+			stream._createLogGroupAndStream = function(logGroupName, logStreamName, cb) {
 				process.nextTick(function() {
 					cb(expectedError);
 				});
@@ -1457,18 +1528,18 @@ describe('CWLogsWritable', function() {
 				throw new Error('Expected not to be called');
 			};
 
-			stream._getSequenceToken(function() {
+			stream._getSequenceToken('foo', 'bar', function() {
 				expect(arguments.length).toBe(1);
 				expect(arguments[0]).toBe(expectedError);
 				done();
 			});
 		});
 
-		it('should pass through error from _createLogStream', function() {
+		it('should pass through error from _createLogStream', function(done) {
 			var expectedError = new Error();
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar',
+				logGroupName: 'FOO',
+				logStreamName: 'BAR',
 				cloudWatchLogsOptions: {
 					describeLogStreams: function(apiParams, cb) {
 						process.nextTick(function() {
@@ -1480,17 +1551,17 @@ describe('CWLogsWritable', function() {
 				}
 			});
 
-			stream._createLogGroupAndStream = function(cb) {
+			stream._createLogGroupAndStream = function() {
 				throw new Error('Expected not to be called');
 			};
 
-			stream._createLogStream = function() {
+			stream._createLogStream = function(logGroupName, logStreamName, cb) {
 				process.nextTick(function() {
 					cb(expectedError);
 				});
 			};
 
-			stream._getSequenceToken(function() {
+			stream._getSequenceToken('foo', 'bar', function() {
 				expect(arguments.length).toBe(1);
 				expect(arguments[0]).toBe(expectedError);
 				done();
@@ -1501,8 +1572,8 @@ describe('CWLogsWritable', function() {
 	describe('CWLogsWritable#_createLogGroupAndStream', function() {
 		it('should call _createLogGroup then _createLogStream and emit events', function(done) {
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar'
+				logGroupName: 'FOO',
+				logStreamName: 'BAR'
 			});
 
 			var createLogGroupEventSpy = expect.createSpy();
@@ -1511,29 +1582,38 @@ describe('CWLogsWritable', function() {
 			var createLogStreamEventSpy = expect.createSpy();
 			stream.on('createLogStream', createLogStreamEventSpy);
 
-			var createLogGroupSpy = expect.spyOn(stream, '_createLogGroup').andCall(function(cb) {
-				expect(createLogGroupSpy.calls.length).toBe(1);
-				expect(createLogStreamSpy.calls.length).toBe(0);
-				expect(createLogGroupEventSpy.calls.length).toBe(0);
-				process.nextTick(function() {
-					cb();
+			var createLogGroupSpy = expect.spyOn(stream, '_createLogGroup')
+				.andCall(function(logGroupName, cb) {
+					expect(createLogGroupSpy.calls.length).toBe(1);
+					expect(createLogStreamSpy.calls.length).toBe(0);
+					expect(createLogGroupEventSpy.calls.length).toBe(0);
+					process.nextTick(function() {
+						cb();
+					});
 				});
-			});
 
-			var createLogStreamSpy = expect.spyOn(stream, '_createLogStream').andCall(function(cb) {
-				expect(createLogGroupSpy.calls.length).toBe(1);
-				expect(createLogStreamSpy.calls.length).toBe(1);
-				expect(createLogGroupEventSpy.calls.length).toBe(1);
-				expect(createLogGroupEventSpy.calls[0].arguments.length).toBe(0);
-				process.nextTick(function() {
-					cb();
+			var createLogStreamSpy = expect.spyOn(stream, '_createLogStream')
+				.andCall(function(logGroupName, logStreamName, cb) {
+					expect(createLogGroupSpy.calls.length).toBe(1);
+					expect(createLogStreamSpy.calls.length).toBe(1);
+					expect(createLogGroupEventSpy.calls.length).toBe(1);
+					expect(createLogGroupEventSpy.calls[0].arguments.length).toBe(0);
+					process.nextTick(function() {
+						cb();
+					});
 				});
-			});
 
-			stream._createLogGroupAndStream(function() {
+			stream._createLogGroupAndStream('foo', 'bar', function() {
 				expect(arguments.length).toBe(0);
 				expect(createLogGroupSpy.calls.length).toBe(1);
+				expect(createLogGroupSpy.calls[0].arguments.length).toBe(2);
+				expect(createLogGroupSpy.calls[0].arguments[0]).toBe('foo');
+				expect(createLogGroupSpy.calls[0].arguments[1]).toBeA('function');
 				expect(createLogStreamSpy.calls.length).toBe(1);
+				expect(createLogStreamSpy.calls[0].arguments.length).toBe(3);
+				expect(createLogStreamSpy.calls[0].arguments[0]).toBe('foo');
+				expect(createLogStreamSpy.calls[0].arguments[1]).toBe('bar');
+				expect(createLogStreamSpy.calls[0].arguments[2]).toBeA('function');
 				expect(createLogStreamEventSpy.calls.length).toBe(1);
 				expect(createLogStreamEventSpy.calls[0].arguments.length).toBe(0);
 				done();
@@ -1543,11 +1623,11 @@ describe('CWLogsWritable', function() {
 		it('should pass through error from _createLogGroup', function(done) {
 			var expectedError = new Error();
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar'
+				logGroupName: 'FOO',
+				logStreamName: 'BAR'
 			});
 
-			stream._createLogGroup = function(cb) {
+			stream._createLogGroup = function(logGroupName, cb) {
 				process.nextTick(function() {
 					cb(expectedError);
 				});
@@ -1557,7 +1637,7 @@ describe('CWLogsWritable', function() {
 				throw new Error('Expected to not be called');
 			};
 
-			stream._createLogGroupAndStream(function() {
+			stream._createLogGroupAndStream('foo', 'bar', function() {
 				expect(arguments.length).toBe(1);
 				expect(arguments[0]).toBe(expectedError);
 				done();
@@ -1571,7 +1651,7 @@ describe('CWLogsWritable', function() {
 				logStreamName: 'bar'
 			});
 
-			stream._createLogGroup = function(cb) {
+			stream._createLogGroup = function(logGroupName, cb) {
 				process.nextTick(function() {
 					cb();
 				});
@@ -1594,15 +1674,15 @@ describe('CWLogsWritable', function() {
 	describe('CWLogsWritable#_createLogGroup', function() {
 		it('should call cloudwatch.createLogGroup', function(done) {
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar'
+				logGroupName: 'FOO',
+				logStreamName: 'BAR'
 			});
 
 			var cb = function() {
 				done();
 			};
 
-			stream._createLogGroup(cb);
+			stream._createLogGroup('foo', cb);
 
 			expect(stream.cloudwatch.createLogGroup.calls.length).toBe(1);
 			expect(stream.cloudwatch.createLogGroup.calls[0].arguments.length).toBe(2);
@@ -1616,15 +1696,15 @@ describe('CWLogsWritable', function() {
 	describe('CWLogsWritable#_createLogStream', function() {
 		it('should call cloudwatch.createLogStream', function(done) {
 			var stream = new CWLogsWritable({
-				logGroupName: 'foo',
-				logStreamName: 'bar'
+				logGroupName: 'FOO',
+				logStreamName: 'BAR'
 			});
 
 			var cb = function() {
 				done();
 			};
 
-			stream._createLogStream(cb);
+			stream._createLogStream('foo', 'bar', cb);
 
 			expect(stream.cloudwatch.createLogStream.calls.length).toBe(1);
 			expect(stream.cloudwatch.createLogStream.calls[0].arguments.length).toBe(2);
