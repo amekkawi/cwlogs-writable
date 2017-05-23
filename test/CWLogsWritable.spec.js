@@ -133,6 +133,44 @@ describe('CWLogsWritable', function() {
 				new CWLogsWritable({
 					logGroupName: '',
 					logStreamName: '',
+					ignoreDataAlreadyAcceptedException: false
+				});
+			}).toNotThrow();
+
+			[void 0, null, 0, -1, 1, '', '0', '1', Infinity, -Infinity, {}, [], NaN, noop]
+				.forEach(function(val) {
+					expect(function() {
+						new CWLogsWritable({
+							logGroupName: '',
+							logStreamName: '',
+							ignoreDataAlreadyAcceptedException: val
+						});
+					}).toThrowWithProps(Error, { message: 'ignoreDataAlreadyAcceptedException option must be a boolean' }, val);
+				});
+
+			expect(function() {
+				new CWLogsWritable({
+					logGroupName: '',
+					logStreamName: '',
+					retryOnInvalidSequenceToken: false
+				});
+			}).toNotThrow();
+
+			[void 0, null, 0, -1, 1, '', '0', '1', Infinity, -Infinity, {}, [], NaN, noop]
+				.forEach(function(val) {
+					expect(function() {
+						new CWLogsWritable({
+							logGroupName: '',
+							logStreamName: '',
+							retryOnInvalidSequenceToken: val
+						});
+					}).toThrowWithProps(Error, { message: 'retryOnInvalidSequenceToken option must be a boolean' }, val);
+				});
+
+			expect(function() {
+				new CWLogsWritable({
+					logGroupName: '',
+					logStreamName: '',
 					writeInterval: 1
 				});
 			}).toNotThrow();
@@ -297,6 +335,8 @@ describe('CWLogsWritable', function() {
 
 			expect(streamDefaults.logGroupName).toBe('foo', 'Expected logGroupName prop %s to be %s');
 			expect(streamDefaults.logStreamName).toBe('bar', 'Expected logStreamName prop %s to be %s');
+			expect(streamDefaults.ignoreDataAlreadyAcceptedException).toBe(true, 'Expected ignoreDataAlreadyAcceptedException prop default %s to be %s');
+			expect(streamDefaults.retryOnInvalidSequenceToken).toBe(true, 'Expected retryOnInvalidSequenceToken prop default %s to be %s');
 			expect(streamDefaults.writeInterval).toBe('nextTick', 'Expected writeInterval prop default %s to be %s');
 			expect(streamDefaults.retryableMax).toBe(100, 'Expected retryableMax prop default %s to be %s');
 			expect(streamDefaults.retryableDelay).toBe(150, 'Expected retryableDelay prop default %s to be %s');
@@ -310,6 +350,8 @@ describe('CWLogsWritable', function() {
 			var streamOverrides = new CWLogsWritable({
 				logGroupName: 'foo',
 				logStreamName: 'bar',
+				ignoreDataAlreadyAcceptedException: false,
+				retryOnInvalidSequenceToken: false,
 				writeInterval: 500,
 				retryableMax: 600,
 				retryableDelay: 700,
@@ -319,6 +361,8 @@ describe('CWLogsWritable', function() {
 				filterWrite: filterWrite
 			});
 
+			expect(streamOverrides.ignoreDataAlreadyAcceptedException).toBe(false, 'Expected ignoreDataAlreadyAcceptedException prop %s to be %s');
+			expect(streamOverrides.retryOnInvalidSequenceToken).toBe(false, 'Expected retryOnInvalidSequenceToken prop %s to be %s');
 			expect(streamOverrides.writeInterval).toBe(500, 'Expected writeInterval prop %s to be %s');
 			expect(streamOverrides.retryableMax).toBe(600, 'Expected retryableMax prop %s to be %s');
 			expect(streamOverrides.retryableDelay).toBe(700, 'Expected retryableDelay prop %s to be %s');
@@ -1061,6 +1105,165 @@ describe('CWLogsWritable', function() {
 
 			stream._sendLogs();
 			expect(stream.queuedLogs.length).toBe(0);
+		});
+
+		it('should auto-requeue events on "InvalidSequenceTokenException" error if retryOnInvalidSequenceToken is true', function(done) {
+			var expectedError = new Error();
+			expectedError.code = 'InvalidSequenceTokenException';
+
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar',
+				retryOnInvalidSequenceToken: true
+			});
+
+			stream.writeQueued = true;
+			stream.sequenceToken = 'seq';
+
+			stream._scheduleSendLogs = function() {
+				throw new Error('Expected not to be called');
+			};
+
+			stream._getSequenceToken = function() {
+				throw new Error('Expected not to be called');
+			};
+
+			stream.onError = function() {
+				throw new Error('Expected not to be called');
+			};
+
+			stream._putLogEvents = function(params, cb) {
+				process.nextTick(function() {
+					cb(expectedError);
+				});
+			};
+
+			stream._write('foo', null, noop);
+			var firstQueueLog = stream.queuedLogs[0];
+
+			var oldNextCbId = this._onErrorNextCbId;
+
+			stream._nextAfterError = expect.createSpy().andCall(function() {
+				expect(this._onErrorNextCbId).toNotBe(oldNextCbId);
+				expect(arguments.length).toBe(2);
+				expect(arguments[0]).toBe(this._onErrorNextCbId);
+				expect(arguments[1]).toBeA('array');
+				expect(arguments[1].length).toBe(1);
+				expect(arguments[1][0]).toBe(firstQueueLog);
+				done();
+			});
+
+			stream._sendLogs();
+			expect(stream.queuedLogs.length).toBe(0);
+		});
+
+		it('should ignore "DataAlreadyAcceptedException" error if ignoreDataAlreadyAcceptedException is true', function(done) {
+			var expectedError = new Error();
+			expectedError.code = 'DataAlreadyAcceptedException';
+
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar',
+				ignoreDataAlreadyAcceptedException: true
+			});
+
+			stream.writeQueued = true;
+			stream.sequenceToken = 'seq';
+
+			stream._scheduleSendLogs = function() {
+				throw new Error('Expected not to be called');
+			};
+
+			stream._getSequenceToken = function() {
+				throw new Error('Expected not to be called');
+			};
+
+			stream.onError = function() {
+				throw new Error('Expected not to be called');
+			};
+
+			stream._putLogEvents = function(params, cb) {
+				process.nextTick(function() {
+					cb(expectedError);
+				});
+			};
+
+			stream._write('foo', null, noop);
+
+			var oldNextCbId = this._onErrorNextCbId;
+
+			stream._nextAfterError = expect.createSpy().andCall(function() {
+				expect(this._onErrorNextCbId).toNotBe(oldNextCbId);
+				expect(arguments.length).toBe(1);
+				expect(arguments[0]).toBe(this._onErrorNextCbId);
+				done();
+			});
+
+			stream._sendLogs();
+			expect(stream.queuedLogs.length).toBe(0);
+		});
+
+		[
+			{ error: 'InvalidSequenceTokenException', option: 'retryOnInvalidSequenceToken' },
+			{ error: 'DataAlreadyAcceptedException', option: 'ignoreDataAlreadyAcceptedException' }
+		].forEach(function(test) {
+			it('should call onError handler like normal on "' + test.error + '" error if ' + test.option + ' is false', function(done) {
+				var expectedError = new Error();
+				expectedError.code = test.error;
+
+				var options = {
+					logGroupName: 'foo',
+					logStreamName: 'bar'
+				};
+				options[test.option] = false;
+
+				var stream = new CWLogsWritable(options);
+
+				stream.writeQueued = true;
+				stream.sequenceToken = 'seq';
+
+				stream._scheduleSendLogs = function() {
+					throw new Error('Expected not to be called');
+				};
+
+				stream._getSequenceToken = function() {
+					throw new Error('Expected not to be called');
+				};
+
+				stream._putLogEvents = function(params, cb) {
+					process.nextTick(function() {
+						cb(expectedError);
+					});
+				};
+
+				stream._write('foo', null, noop);
+				var firstQueueLog = stream.queuedLogs[0];
+
+				var oldNextCbId = this._onErrorNextCbId;
+
+				stream._nextAfterError = expect.createSpy().andCall(function() {
+					expect(arguments.length).toBe(2);
+					expect(arguments[0]).toBe(this._onErrorNextCbId);
+					expect(arguments[1]).toBe('foo');
+					done();
+				});
+
+				stream.onError = expect.createSpy().andCall(function() {
+					expect(this._onErrorNextCbId).toNotBe(oldNextCbId);
+					expect(arguments.length).toBe(3);
+					expect(arguments[0]).toBe(expectedError);
+					expect(arguments[1]).toBeA('array');
+					expect(arguments[1].length).toBe(1);
+					expect(arguments[1][0]).toBe(firstQueueLog);
+					expect(arguments[2]).toBeA('function');
+
+					// Call 'next'
+					arguments[2]('foo');
+				});
+
+				stream._sendLogs();
+				expect(stream.queuedLogs.length).toBe(0);
+			});
 		});
 
 		it('should set next sequence token and call _scheduleSendLogs if queue is not empty', function(done) {

@@ -10,6 +10,8 @@
     * [.logGroupName](#CWLogsWritable+logGroupName) : <code>string</code>
     * [.logStreamName](#CWLogsWritable+logStreamName) : <code>string</code>
     * [.writeInterval](#CWLogsWritable+writeInterval) : <code>string</code> &#124; <code>number</code>
+    * [.ignoreDataAlreadyAcceptedException](#CWLogsWritable+ignoreDataAlreadyAcceptedException) : <code>boolean</code>
+    * [.retryOnInvalidSequenceToken](#CWLogsWritable+retryOnInvalidSequenceToken) : <code>boolean</code>
     * [.retryableMax](#CWLogsWritable+retryableMax) : <code>number</code>
     * [.retryableDelay](#CWLogsWritable+retryableDelay) : <code>string</code> &#124; <code>number</code>
     * [.maxBatchCount](#CWLogsWritable+maxBatchCount) : <code>number</code>
@@ -37,9 +39,11 @@ Writable stream for AWS CloudWatch Logs.
     - [.cloudWatchLogsOptions] <code>object</code> <code> = {}</code> - Options passed to [AWS.CloudWatchLogs](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#constructor-property) service.
     - [.writeInterval] <code>string</code> | <code>number</code> <code> = &quot;nextTick&quot;</code> - Amount of wait time after a Writable#_write call to allow batching of log events. Must be a positive number or "nextTick". If "nextTick", `process.nextTick` is used. If a number, `setTimeout` is used.
     - [.retryableDelay] <code>string</code> | <code>number</code> <code> = 150</code>
-    - [.retryableMax] <code>number</code> <code> = 100</code> - Maximum number of times a AWS error marked as "retryable" will be retried before the error is instead passed to [onError](#CWLogsWritable+onError).
+    - [.retryableMax] <code>number</code> <code> = 100</code> - Maximum number of times an AWS error marked as "retryable" will be retried before the error is instead passed to [onError](#CWLogsWritable+onError).
     - [.maxBatchCount] <code>number</code> <code> = 10000</code> - Maximum number of log events allowed in a single PutLogEvents API call.
     - [.maxBatchSize] <code>number</code> <code> = 1048576</code> - Maximum number of bytes allowed in a single PutLogEvents API call.
+    - [.ignoreDataAlreadyAcceptedException] <code>boolean</code> <code> = true</code> - Ignore `DataAlreadyAcceptedException` errors. This will bypass [onError](#CWLogsWritable+onError). See [cwlogs-writable/issues/10](https://github.com/amekkawi/cwlogs-writable/issues/10).
+    - [.retryOnInvalidSequenceToken] <code>boolean</code> <code> = true</code> - Retry on `InvalidSequenceTokenException` errors. This will bypass [onError](#CWLogsWritable+onError). See [cwlogs-writable/issues/12](https://github.com/amekkawi/cwlogs-writable/issues/12).
     - [.onError] <code>function</code> - Called when an AWS error is encountered. Overwrites [onError](#CWLogsWritable+onError) method.
     - [.filterWrite] <code>function</code> - Filter writes to CWLogsWritable. Overwrites [filterWrite](#CWLogsWritable+filterWrite) method.
     - [.objectMode] <code>boolean</code> <code> = true</code> - Passed to the Writable constructor. See https://nodejs.org/api/stream.html#stream_object_mode.
@@ -83,10 +87,35 @@ If a number, `setTimeout` is used.
 
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 **Default**: <code>&quot;nextTick&quot;</code>  
+<a name="CWLogsWritable+ignoreDataAlreadyAcceptedException"></a>
+
+### cwLogsWritable.ignoreDataAlreadyAcceptedException : <code>boolean</code>
+Ignore `DataAlreadyAcceptedException` errors returned by
+[PutLogEvents](http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html) requests.
+
+This will bypass [onError](#CWLogsWritable+onError).
+
+See [cwlogs-writable/issues/10](https://github.com/amekkawi/cwlogs-writable/issues/10).
+
+**Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
+**Default**: <code>true</code>  
+<a name="CWLogsWritable+retryOnInvalidSequenceToken"></a>
+
+### cwLogsWritable.retryOnInvalidSequenceToken : <code>boolean</code>
+Resend log events if
+[PutLogEvents](http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
+requests return a `InvalidSequenceTokenException` error.
+
+This will bypass [onError](#CWLogsWritable+onError).
+
+See [cwlogs-writable/issues/12](https://github.com/amekkawi/cwlogs-writable/issues/12).
+
+**Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
+**Default**: <code>true</code>  
 <a name="CWLogsWritable+retryableMax"></a>
 
 ### cwLogsWritable.retryableMax : <code>number</code>
-Maximum number of times a AWS error marked as "retryable" will be
+Maximum number of times an AWS error marked as "retryable" will be
 retried before the error is instead passed to [onError](#CWLogsWritable+onError).
 
 **Kind**: instance property of <code>[CWLogsWritable](#CWLogsWritable)</code>  
