@@ -8,8 +8,10 @@ Writable stream for AWS CloudWatch Logs, inspired by [bunyan-cloudwatch](https:/
 * [API Docs](#api-docs)
 * [Quick Start](#quick-start)
 * [Bunyan Example](#bunyan-example)
+* [Capturing Log Record Stringification Errors](#capturing-log-record-stringification-errors)
 * [Picking LogStream Names](#picking-logstream-names)
-* [Recovering from AWS Errors](#recovering-from-aws-errors)
+* [Recovering from Errors](#recovering-from-errors)
+* [Custom Handling of InvalidSequenceTokenException AWS Errors](#custom-handling-of-invalidsequencetokenexception-aws-errors)
 * [CWLogsWritable Options](#cwlogswritable-options)
 * [Change Log](#change-log)
 * [License](#license)
@@ -68,6 +70,12 @@ var stream = new CWLogsWritable({
 
 stream.write('example-log-message');
 ```
+
+Also consider this checklist:
+
+* Are my log stream names [unique enough](#picking-logstream-names)?
+* What if a log record [stringification fails](#capturing-log-record-stringification-errors)?
+* Should my logging [recover from errors](#recovering-from-errors) or fail fast?
 
 ## Bunyan Example ##
 
@@ -139,11 +147,43 @@ var logStreamName = [
 ].filter(Boolean).join('/').replace(/[:*]/g, '');
 ```
 
-## Recovering from AWS Errors ##
+## Capturing Log Record Stringification Errors ##
 
-When an AWS error is encounted, the default behavior of a CWLogsWritable
-stream is to emit an 'error' event, clear any queued logs, and ignore all
-further writes to the stream to prevent memory leaks.
+Before log records are sent to AWS they must be stringified.
+cwlogs-writable uses safe stringification techniques to handle
+circular references that would normally cause JSON.stringify to fail.
+
+Other errors thrown during stringification (e.g. one thrown by a
+[property getter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get))
+will also be handled if the optional dependency
+[safe-json-stringify](https://npmjs.com/package/safe-json-stringify)
+is installed.
+
+If it is not installed, cwlogs-writable will catch the error and emit a
+`stringifyError` event.
+
+```javascript
+var stream = new CWLogsWritable({ ... });
+
+// Catch errors if safe-json-stringify is not installed
+stream.on('stringifyError', function(err, record) {
+  console.log('Failed to stringify log entry!', err);
+
+  // You can attempt to manually process the record argument,
+  // but be careful as you will may hit the same error.
+  //customBadRecordProcessing(record);
+});
+```
+
+## Recovering from Errors ##
+
+By default cwlogs-writable will handle the two most common AWS errors,
+`InvalidSequenceTokenException` and `DataAlreadyAcceptedException`, to
+give your application as much resiliency as possible.
+
+For all other errors, the default behavior of a CWLogsWritable stream is to
+emit an 'error' event, clear any queued logs, and ignore all further writes to
+the stream to prevent memory leaks.
 
 To override this behavior you can provide a `onError` callback that will
 allow you to recover from these errors.
@@ -189,6 +229,56 @@ var stream = new CWLogsWritable({
   logGroupName: 'my-aws-log-group',
   logStreamName: streamName,
   cloudWatchLogsOptions: { /* ... */ },
+
+  // Pass the onError callback to CWLogsWritable
+  onError: onError
+});
+```
+
+## Custom Handling of InvalidSequenceTokenException AWS Errors ##
+
+Frequent `InvalidSequenceTokenException` AWS errors may indicate a
+problem with the uniqueness of your LogStream name
+(see [Picking LogStream Names](#picking-logstream-names)).
+
+If you are experiencing throttling on
+[PutLogEvents](http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
+or [DescribeLogStreams](http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html)
+actions, you may want to add custom handling of `InvalidSequenceTokenException` errors.
+
+```javascript
+// Example of changing the logStreamName on
+// InvalidSequenceTokenException errors
+// to attempt to avoid further collisions.
+
+function getLogStreamName() {
+  return 'my-log-stream/' + Date.now()
+    + '/' + Math.round(Math.random() * 4026531839 + 268435456).toString(16);
+}
+
+function onError(err, logEvents, next) {
+  // Change the LogStream name to get a new
+  // randomized value, and requeue the log events.
+  if (err.code === 'InvalidSequenceTokenException') {
+    this.logStreamName = getLogStreamName();
+    next(logEvents);
+  }
+
+  // Default to built-in behavior.
+  else {
+    next(err);
+  }
+}
+
+var stream = new CWLogsWritable({
+  logGroupName: 'my-aws-log-group',
+  logStreamName: getLogStreamName(),
+  cloudWatchLogsOptions: { /* ... */ },
+
+  // Disable the default handling of
+  // InvalidSequenceTokenException errors
+  // so onError will get them instead.
+  retryOnInvalidSequenceToken: false,
 
   // Pass the onError callback to CWLogsWritable
   onError: onError
