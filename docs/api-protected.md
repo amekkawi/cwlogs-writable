@@ -336,7 +336,7 @@ takes into account possible UTF-8 characters.
 **Access:** protected  
 **Params**
 
-- message <code>string</code> - The "message" prop of an LogEvent.
+- message <code>string</code> - The "message" prop of a LogEvent.
 
 <a name="CWLogsWritable+event_putLogEvents"></a>
 
