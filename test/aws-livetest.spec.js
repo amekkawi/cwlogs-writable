@@ -1,6 +1,6 @@
 'use strict';
 
-var expect = require('expect');
+var expect = require('./setup');
 
 describe('AWS Live Test', function() {
 	this.slow(2000);

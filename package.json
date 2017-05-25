@@ -19,8 +19,8 @@
     "docs-changelog": "node .bin/docs/index.js CHANGELOG.md --readme=CHANGELOG --overwrite --protected",
     "docs-api": "node .bin/docs/index.js docs/api.md --overwrite --unified",
     "docs-api-protected": "node .bin/docs/index.js docs/api-protected.md --overwrite --protected --unified",
-    "test": "mocha --bail --require ./test/setup.js ./test/index.js",
-    "test-live": "mocha --bail --require ./test/setup.js ./test/aws-livetest.spec.js",
+    "test": "mocha --bail ./test/index.js",
+    "test-live": "mocha --bail ./test/aws-livetest.spec.js",
     "lint": "eslint ."
   },
   "keywords": [

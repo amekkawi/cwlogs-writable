@@ -1,6 +1,6 @@
 'use strict';
 
-var expect = require('expect');
+var expect = require('./setup');
 var proxyquire = require('proxyquire');
 
 describe('safe-stringify', function() {
