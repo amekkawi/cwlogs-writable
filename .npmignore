@@ -4,5 +4,6 @@
 /examples
 /docs
 /test
+#/test/.aws-env
 /*.tz
 /npm-debug.log

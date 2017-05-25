@@ -1,6 +1,10 @@
 'use strict';
 
 var expect = require('./setup');
+var path = require('path');
+require('dotenv').config({
+	path: path.join(__dirname, '.aws-env')
+});
 
 describe('AWS Live Test', function() {
 	this.slow(2000);
