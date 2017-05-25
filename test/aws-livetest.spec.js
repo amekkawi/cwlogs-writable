@@ -146,7 +146,7 @@ describe('AWS Live Test', function() {
 		}
 	});
 
-	it('should catch InvalidSequenceTokenException in onError handler', function(done) {
+	it('should retry on InvalidSequenceTokenException by default', function(done) {
 		var errorEventSpy = expect.createSpy()
 			.andCall(function() {
 				done();
@@ -177,6 +177,64 @@ describe('AWS Live Test', function() {
 			}
 		});
 
+		stream.onError = function() {
+			throw new Error('Expected not to be called');
+		};
+
+		stream.write('foo');
+
+		stream.once('putLogEvents', function(logEvents) {
+			expect(logEvents.length).toBe(1);
+			expect(this.queuedLogs.length).toBe(0);
+
+			// Force an invalid sequence token
+			expect(stream.sequenceToken).toBeA('string');
+			stream.sequenceToken = 'invalid-token';
+
+			stream.write('bar');
+
+			stream.on('error', function(err) {
+				done(err);
+			});
+
+			stream.once('putLogEvents', function() {
+				done();
+			});
+		});
+	});
+
+	it('should catch InvalidSequenceTokenException in onError handler if default behavior disabled', function(done) {
+		var errorEventSpy = expect.createSpy()
+			.andCall(function() {
+				done();
+			});
+
+		var onErrorSpy = expect.createSpy()
+			.andCall(function(err, logEvents, next) {
+				try {
+					expect(errorEventSpy.calls.length).toBe(0);
+					expect(err.code).toBe('InvalidSequenceTokenException');
+				}
+				catch (err) {
+					done(err);
+					return;
+				}
+
+				next(err);
+			});
+
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			retryOnInvalidSequenceToken: false,
+			onError: onErrorSpy,
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: accessKeyId,
+				secretAccessKey: secretAccessKey
+			}
+		});
+
 		stream.on('error', errorEventSpy);
 
 		stream.write('foo');
@@ -186,6 +244,7 @@ describe('AWS Live Test', function() {
 			expect(this.queuedLogs.length).toBe(0);
 
 			// Force an invalid sequence token
+			expect(stream.sequenceToken).toBeA('string');
 			stream.sequenceToken = 'invalid-token';
 
 			stream.write('bar');
@@ -196,7 +255,7 @@ describe('AWS Live Test', function() {
 		});
 	});
 
-	it('should catch DataAlreadyAcceptedException in onError handler', function(done) {
+	it('should catch DataAlreadyAcceptedException in onError handler if default behavior is disabled', function(done) {
 		var errorEventSpy = expect.createSpy()
 			.andCall(function() {
 				done();
@@ -219,6 +278,7 @@ describe('AWS Live Test', function() {
 		var stream = new CWLogsWritable({
 			logGroupName: logGroupName,
 			logStreamName: logStreamName,
+			ignoreDataAlreadyAcceptedException: false,
 			onError: onErrorSpy,
 			cloudWatchLogsOptions: {
 				region: region,
@@ -232,8 +292,9 @@ describe('AWS Live Test', function() {
 		stream.write('foo');
 
 		var seqToken;
-		stream.once('putLogEvents', function(logEvents) {
+		stream.once('putLogEvents', function() {
 			// Copy the seq token so it is reused.
+			expect(stream.sequenceToken).toBeA('string');
 			seqToken = stream.sequenceToken;
 
 			stream.write('bar');
