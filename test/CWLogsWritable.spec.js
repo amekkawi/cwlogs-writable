@@ -451,6 +451,13 @@ describe('CWLogsWritable', function() {
 			expect(expectedOpts.constructor.calls[0].arguments.length).toBe(1);
 			expect(expectedOpts.constructor.calls[0].arguments[0]).toBe(expectedOpts);
 		});
+
+		it('should handle being called without "new"', function() {
+			expect(CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			})).toBeA(CWLogsWritable);
+		});
 	});
 
 	describe('CWLogsWritable#getQueueSize', function() {
@@ -1860,13 +1867,13 @@ describe('CWLogsWritable', function() {
 				});
 			};
 
-			stream._createLogStream = function(cb) {
+			stream._createLogStream = function(logGroupName, logStreamName, cb) {
 				process.nextTick(function() {
 					cb(expectedError);
 				});
 			};
 
-			stream._createLogGroupAndStream(function() {
+			stream._createLogGroupAndStream('FOO', 'BAR', function() {
 				expect(arguments.length).toBe(1);
 				expect(arguments[0]).toBe(expectedError);
 				done();
