@@ -21,6 +21,11 @@ git diff-index --quiet HEAD
 test -z "$(git ls-files --exclude-standard --others)"
 [ $? -ne 0 ] && echo "Failed: One or more untracked files are present" 1>&2 && exit 1
 
+if [ -d "${SCRIPTDIR}/coverage" ]; then
+	rm -rf "${SCRIPTDIR}/coverage"
+	[ $? -ne 0 ] && echo "Failed to remove coverage" 1>&2 && exit 1
+fi
+
 echo
 echo "NPM remove and install..."
 echo "========================"
