@@ -14,7 +14,7 @@ describe('safe-stringify', function() {
 		expect.restoreSpies();
 	});
 
-	describe('safeCycles', function() {
+	function testSafeCycles(method) {
 		it('should replace shallow circular references', function() {
 			var safeStringify = getProxiedModule();
 			var obj = {
@@ -26,7 +26,7 @@ describe('safe-stringify', function() {
 			obj.bref = obj.b;
 			obj.cref = obj.c;
 
-			expect(JSON.stringify(obj, safeStringify.safeCycles()))
+			expect(JSON.stringify(obj, safeStringify[method]()))
 				.toBe(JSON.stringify({
 					a: 'foo',
 					b: {},
@@ -51,7 +51,7 @@ describe('safe-stringify', function() {
 			obj.c.push(obj);
 			obj.c.push(obj.c);
 
-			expect(JSON.stringify(obj, safeStringify.safeCycles()))
+			expect(JSON.stringify(obj, safeStringify[method]()))
 				.toBe(JSON.stringify({
 					a: 'foo',
 					b: {
@@ -80,7 +80,7 @@ describe('safe-stringify', function() {
 			obj.d.push(obj.e);
 			obj.e.dref = obj.d;
 
-			expect(JSON.stringify(obj, safeStringify.safeCycles()))
+			expect(JSON.stringify(obj, safeStringify[method]()))
 				.toBe(JSON.stringify({
 					a: 'foo',
 					b: {
@@ -104,7 +104,7 @@ describe('safe-stringify', function() {
 			});
 
 			try {
-				JSON.stringify(obj, safeStringify.safeCycles());
+				JSON.stringify(obj, safeStringify[method]());
 			}
 			catch (err) {
 				if (err !== expectedError) {
@@ -116,6 +116,18 @@ describe('safe-stringify', function() {
 
 			throw new Error('Expected to throw error');
 		});
+	}
+
+	describe('safeCycles', function() {
+		testSafeCycles('safeCycles');
+	});
+
+	describe('_safeCyclesSet', function() {
+		testSafeCycles('_safeCyclesSet');
+	});
+
+	describe('_safeCyclesArray', function() {
+		testSafeCycles('_safeCyclesArray');
 	});
 
 	describe('fastAndSafeJsonStringify', function() {
