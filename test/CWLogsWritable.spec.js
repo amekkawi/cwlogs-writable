@@ -1949,6 +1949,13 @@ describe('CWLogsWritable', function() {
 			expect(stream.filterWrite).toBe(CWLogsWritable._falseFilterWrite);
 		});
 	});
+
+	describe('CWLogsWritable._falseFilterWrite', function() {
+		it('should return false', function() {
+			expect(CWLogsWritable._falseFilterWrite.call(null))
+				.toBe(false);
+		});
+	});
 });
 
 function createAWSStub() {
