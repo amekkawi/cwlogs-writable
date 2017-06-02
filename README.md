@@ -2,8 +2,8 @@
 
 Writable stream for AWS CloudWatch Logs, inspired by [bunyan-cloudwatch](https://github.com/mirkokiefer/bunyan-cloudwatch).
 
-[![Build Status](https://travis-ci.org/amekkawi/cwlogs-writable.svg?branch=v0.2.0)](https://travis-ci.org/amekkawi/cwlogs-writable)
-[![Coverage Status](https://coveralls.io/repos/github/amekkawi/cwlogs-writable/badge.svg?branch=v0.2.0)](https://coveralls.io/github/amekkawi/cwlogs-writable?branch=v0.2.0)
+[![Build Status](https://travis-ci.org/amekkawi/cwlogs-writable.svg?branch=v0.3.0)](https://travis-ci.org/amekkawi/cwlogs-writable)
+[![Coverage Status](https://coveralls.io/repos/github/amekkawi/cwlogs-writable/badge.svg?branch=v0.3.0)](https://coveralls.io/github/amekkawi/cwlogs-writable?branch=v0.3.0)
 
 * [Features](#features)
 * [API Docs](#api-docs)

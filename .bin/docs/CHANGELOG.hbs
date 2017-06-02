@@ -1,5 +1,13 @@
 # cwlogs-writable Change Log #
 
+## 0.3.0 (June 2, 2017)
+
+  * Add options for auto-handling common AWS errors [#10][#12]
+  * Add code coverage support (including coveralls)
+  * Add missing CWLogsWritable test for internal filter method
+  * Change logGroupName/logStreamName props to be writable [#11]
+  * Fix CWLogsWritable test for error handling
+
 ## 0.2.0 (May 14, 2017)
 
   * Add optional "safe-json-stringify" NPM dependency

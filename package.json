@@ -1,6 +1,6 @@
 {
   "name": "cwlogs-writable",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Writable stream for AWS CloudWatch Logs",
   "main": "lib/index.js",
   "author": "Andre Mekkawi <github@andremekkawi.com>",
