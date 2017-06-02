@@ -20,6 +20,9 @@
     "docs-api": "node .bin/docs/index.js docs/api.md --overwrite --unified",
     "docs-api-protected": "node .bin/docs/index.js docs/api-protected.md --overwrite --protected --unified",
     "test": "mocha --bail ./test/index.js",
+    "cover": "nyc mocha --bail -R dot ./test/index.js",
+    "cover-html": "nyc --reporter html mocha --bail -R dot ./test/index.js",
+    "coveralls": "nyc --reporter lcovonly mocha --bail -R dot ./test/index.js && cat ./coverage/lcov.info | coveralls",
     "test-live": "mocha --bail ./test/aws-livetest.spec.js",
     "lint": "eslint ."
   },
@@ -33,6 +36,7 @@
     "aws-sdk": "^2.0.0"
   },
   "devDependencies": {
+    "coveralls": "^2.13.1",
     "dmd": "2.1.2",
     "dotenv": "^4.0.0",
     "eslint": "^3.9.1",
@@ -43,6 +47,7 @@
     "jsdoc-parse": "2.0.5",
     "minimist": "^1.2.0",
     "mocha": "^3.0.2",
+    "nyc": "^11.0.1",
     "object-assign": "^4.1.1",
     "object-inspect": "^1.2.1",
     "proxyquire": "^1.7.11",

@@ -10,3 +10,5 @@ node_js:
   - "iojs"
 notifications:
   email: false
+after_success:
+- npm run coveralls

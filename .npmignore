@@ -7,3 +7,6 @@
 #/test/.aws-env
 /*.tz
 /npm-debug.log
+/coverage/
+/.nyc_output/
+/.coveralls.yml
