@@ -8,6 +8,10 @@ exports.linkPrefix = function() {
 	return '';
 };
 
+exports.packageVersion = function() {
+	return process.env.DOCS_PACKAGE_VERSION;
+};
+
 exports.typedef = function(options) {
 	options.hash.kind = 'typedef';
 	var result = handlebars.helpers._identifier(options);

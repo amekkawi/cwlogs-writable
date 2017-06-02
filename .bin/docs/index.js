@@ -65,6 +65,12 @@ function main() {
 			}
 		})
 		.then(function() {
+			return getPackageVersion()
+				.then(function(packageVersion) {
+					process.env.DOCS_PACKAGE_VERSION = packageVersion;
+				});
+		})
+		.then(function() {
 			return getTemplateData(options)
 				.then(filterTemplateData)
 				.then(function(templateData) {
@@ -114,6 +120,25 @@ function checkOutputPath() {
 			}
 		});
 	});
+}
+
+function getPackageVersion() {
+	return new Promise(function(resolve, reject) {
+		fs.readFile(path.join(__dirname, '../../package.json'), { encoding: 'utf8' }, function(err, data) {
+			if (err) {
+				reject(err);
+			}
+			else {
+				resolve(data);
+			}
+		})
+	})
+		.then(function(data) {
+			return JSON.parse(data);
+		})
+		.then(function(packageJSON) {
+			return packageJSON && packageJSON.version;
+		});
 }
 
 function removeOutputDir() {
