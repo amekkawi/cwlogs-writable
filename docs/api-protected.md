@@ -26,7 +26,7 @@
     * [.onError(err, logEvents, next)](#CWLogsWritable+onError)
     * [.filterWrite(rec)](#CWLogsWritable+filterWrite) ⇒ <code>boolean</code>
     * [.createService(opts)](#CWLogsWritable+createService) ⇒ <code>CloudWatchLogs</code>
-    * [.nextLogBatchSize(queuedLogs)](#CWLogsWritable+nextLogBatchSize) ⇒ <code>number</code>
+    * [.dequeueNextLogBatch()](#CWLogsWritable+dequeueNextLogBatch) ⇒ <code>Array.&lt;{message: string, timestamp: number}&gt;</code>
     * [.getMessageSize(message)](#CWLogsWritable+getMessageSize) ⇒ <code>number</code>
     * ["putLogEvents" (logEvents)](#CWLogsWritable+event_putLogEvents)
     * ["createLogGroup"](#CWLogsWritable+event_createLogGroup)
@@ -299,19 +299,15 @@ Create the AWS.CloudWatchLogs service.
 
 - opts <code>object</code> - Passed as first argument to AWS.CloudWatchLogs.
 
-<a name="CWLogsWritable+nextLogBatchSize"></a>
+<a name="CWLogsWritable+dequeueNextLogBatch"></a>
 
-### cwLogsWritable.nextLogBatchSize(queuedLogs) ⇒ <code>number</code>
-Get the size of the next batch of log events to send,
+### cwLogsWritable.dequeueNextLogBatch() ⇒ <code>Array.&lt;{message: string, timestamp: number}&gt;</code>
+Get the next batch of log events to send,
 based on the the constraints of PutLogEvents.
 
 **Kind**: instance method of <code>[CWLogsWritable](#CWLogsWritable)</code>  
 **Access:** protected  
 **See**: http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html  
-**Params**
-
-- queuedLogs <code>Array.&lt;{message:string, timestamp:number}&gt;</code> - Number of bytes used by other JSON.
-
 <a name="CWLogsWritable+getMessageSize"></a>
 
 ### cwLogsWritable.getMessageSize(message) ⇒ <code>number</code>
