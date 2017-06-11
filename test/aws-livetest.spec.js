@@ -307,4 +307,85 @@ describe('AWS Live Test', function() {
 			});
 		});
 	});
+
+	it('should allow timestamps in different batches to be out of order', function(done) {
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			ignoreDataAlreadyAcceptedException: false,
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: accessKeyId,
+				secretAccessKey: secretAccessKey
+			}
+		});
+
+		stream.on('error', function(err) {
+			var expectErr = new Error('Expected not to throw -- ' + err.name + ': ' + err.message);
+			var expectStack = expectErr.stack.split(/\n/g);
+			expectStack = expectStack.length > 10
+				? expectStack.slice(0, 10).join('\n') + '\n    ...'
+				: expectStack.join('\n');
+			expectErr.stack = expectStack + '\n' + err.stack;
+			done(expectErr);
+		});
+
+		var now = Date.now();
+		var rand = Math.round(Math.random() * 4026531839 + 268435456).toString(16);
+
+		stream.write({ time: now, msg: rand + ' 2' });
+		stream.write({ time: now + 60000, msg: rand + ' 3' });
+
+		stream.once('putLogEvents', function() {
+			stream.write({ time: now - 1200000, msg: rand + ' 1' });
+			stream.write({ time: now + 600000, msg: rand + ' 4' });
+
+			stream.once('putLogEvents', function() {
+				done();
+			});
+		});
+	});
+
+	it('should ignore log entries that are older than 14 days or over 2 hours in the future', function(done) {
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			ignoreDataAlreadyAcceptedException: false,
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: accessKeyId,
+				secretAccessKey: secretAccessKey
+			}
+		});
+
+		stream.on('error', function(err) {
+			var expectErr = new Error('Expected not to throw -- ' + err.name + ': ' + err.message);
+			var expectStack = expectErr.stack.split(/\n/g);
+			expectStack = expectStack.length > 10
+				? expectStack.slice(0, 10).join('\n') + '\n    ...'
+				: expectStack.join('\n');
+			expectErr.stack = expectStack + '\n' + err.stack;
+			done(expectErr);
+		});
+
+		var now = Date.now();
+		var rand = Math.round(Math.random() * 4026531839 + 268435456).toString(16);
+
+		stream.write({ time: now - 365 * 86400000, msg: rand + ' -1 year' });
+		stream.write({ time: now - 15 * 86400000, msg: rand + ' -15 day' });
+		stream.write({ time: now - 14 * 86400000, msg: rand + ' -14 day' });
+		stream.write({ time: now - 13.5 * 86400000, msg: rand + ' -13.5 day' });
+
+		stream.once('putLogEvents', function() {
+			stream.write({ time: now + 3600000, msg: rand + ' +1 hour' });
+			stream.write({ time: now + 1.5 * 3600000, msg: rand + ' +1.5 hours' });
+			stream.write({ time: now + 2 * 3600000, msg: rand + ' +2 hours' });
+			stream.write({ time: now + 4 * 3600000, msg: rand + ' +4 hours' });
+			stream.write({ time: now + 86400000, msg: rand + ' +1 day' });
+
+			stream.once('putLogEvents', function() {
+				done();
+			});
+		});
+	});
 });
