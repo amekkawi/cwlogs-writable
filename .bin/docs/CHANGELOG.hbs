@@ -1,5 +1,19 @@
 # cwlogs-writable Change Log #
 
+## 0.4.0 (Jun 11, 2017)
+
+  **Breaking Changes:**
+
+  * Remove `CWLogsWritable#nextLogBatchSize` in favor of {{mdLink "CWLogsWritable#dequeueNextLogBatch"}}
+
+  **Non-Breaking Changes:**
+
+  * Add {{mdLink "CWLogsWritable#dequeueNextLogBatch"}} to get the next batch of log events,
+    and also handle chronological limits of PutLogEvents API call [#2]
+     * Batch of log events must be in chronological order by timestamp
+     * Batch of log events cannot exceed 24 hours
+  * Add live tests for chronological limits of PutLogEvents
+
 ## 0.3.0 (June 2, 2017)
 
   * Add options for auto-handling common AWS errors [#10][#12]
