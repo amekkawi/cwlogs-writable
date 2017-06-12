@@ -46,7 +46,7 @@ describe('AWS Live Test', function() {
 		});
 
 		stream.on('error', function(err) {
-			throw err;
+			done(err);
 		});
 
 		stream.on('putLogEvents', function(logEvents) {
@@ -78,9 +78,7 @@ describe('AWS Live Test', function() {
 		expect(maxSize).toBe(262118);
 
 		stream.on('error', function(err) {
-			//console.error({ m: err.message, c: err.code, s: err.statusCode });
-			//console.log(Object.keys(err));
-			throw err;
+			done(err);
 		});
 
 		stream.on('putLogEvents', function(logEvents) {
@@ -113,7 +111,7 @@ describe('AWS Live Test', function() {
 		});
 
 		stream.on('putLogEvents', function() {
-			throw new Error('Expected not to succeed');
+			done(new Error('Expected not to succeed'));
 		});
 
 		var largeMessage = new Array(maxSize + 2).join('0');
@@ -132,7 +130,7 @@ describe('AWS Live Test', function() {
 		});
 
 		stream.on('error', function(err) {
-			throw err;
+			done(err);
 		});
 
 		stream.on('putLogEvents', function(logEvents) {
@@ -178,7 +176,7 @@ describe('AWS Live Test', function() {
 		});
 
 		stream.onError = function() {
-			throw new Error('Expected not to be called');
+			done(new Error('Expected not to be called'));
 		};
 
 		stream.write('foo');
