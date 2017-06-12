@@ -63,6 +63,58 @@ describe('AWS Live Test', function() {
 		}
 	});
 
+	it('should handle invalid accessKeyId (UnrecognizedClientException)', function(done) {
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			onError: function(err) {
+				expect(err.code).toBe('UnrecognizedClientException');
+
+				// Set delay to make sure AWS-SDK doesn't throw an error.
+				setTimeout(function() {
+					done();
+				}, 50);
+			},
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: 'nope',
+				secretAccessKey: 'nope'
+			}
+		});
+
+		stream.write('foo');
+
+		stream.on('putLogEvents', function() {
+			done(new Error('Expected to not be called'));
+		});
+	});
+
+	it('should handle invalid secretAccessKey (InvalidSignatureException)', function(done) {
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			onError: function(err) {
+				expect(err.code).toBe('InvalidSignatureException');
+
+				// Set delay to make sure AWS-SDK doesn't throw an error.
+				setTimeout(function() {
+					done();
+				}, 50);
+			},
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: accessKeyId,
+				secretAccessKey: '0OKW39DejMUcepCSKAkYuKLwuz3k60VdJXinDQHS'
+			}
+		});
+
+		stream.write('foo');
+
+		stream.on('putLogEvents', function() {
+			done(new Error('Expected to not be called'));
+		});
+	});
+
 	it('should allow up to 262118 bytes (256 KB - 26 bytes) for the message', function(done) {
 		var stream = new CWLogsWritable({
 			logGroupName: logGroupName,
