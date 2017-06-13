@@ -396,6 +396,106 @@ describe('AWS Live Test', function() {
 		});
 	});
 
+	it('should catch InvalidParameterException in onError handler when timestamps are out of order', function(done) {
+		var onErrorSpy = expect.createSpy()
+			.andCall(function(err) {
+				try {
+					expect(dequeueSpy.calls.length).toBe(1);
+					expect(err.code).toBe('InvalidParameterException');
+					expect(err.message).toBe('Log events in a single PutLogEvents request must be in chronological order.');
+				}
+				catch (err) {
+					done(err);
+					return;
+				}
+
+				// Set delay to make sure AWS-SDK doesn't throw an error.
+				setTimeout(function() {
+					done();
+				}, 50);
+			});
+
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			ignoreDataAlreadyAcceptedException: false,
+			onError: onErrorSpy,
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: accessKeyId,
+				secretAccessKey: secretAccessKey
+			}
+		});
+
+		// Get next batch without chronological checks.
+		var dequeueSpy = stream.dequeueNextLogBatch = expect.createSpy()
+			.andCall(function() {
+				var batch = this.queuedLogs;
+				this.queuedLogs = [];
+				return batch;
+			});
+
+		var now = Date.now();
+		var rand = Math.round(Math.random() * 4026531839 + 268435456).toString(16);
+
+		stream.write({ time: now + 60000, msg: rand + ' 2' });
+		stream.write({ time: now, msg: rand + ' 1' });
+
+		stream.once('putLogEvents', function() {
+			done(new Error('Expected not to be called'));
+		});
+	});
+
+	it('should catch InvalidParameterException in onError handler when timestamps span more than 24 hours', function(done) {
+		var onErrorSpy = expect.createSpy()
+			.andCall(function(err) {
+				try {
+					expect(dequeueSpy.calls.length).toBe(1);
+					expect(err.code).toBe('InvalidParameterException');
+					expect(err.message).toBe('The batch of log events in a single PutLogEvents request cannot span more than 24 hours.');
+				}
+				catch (err) {
+					done(err);
+					return;
+				}
+
+				// Set delay to make sure AWS-SDK doesn't throw an error.
+				setTimeout(function() {
+					done();
+				}, 50);
+			});
+
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			ignoreDataAlreadyAcceptedException: false,
+			onError: onErrorSpy,
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: accessKeyId,
+				secretAccessKey: secretAccessKey
+			}
+		});
+
+		// Get next batch without chronological checks.
+		var dequeueSpy = stream.dequeueNextLogBatch = expect.createSpy()
+			.andCall(function() {
+				var batch = this.queuedLogs;
+				this.queuedLogs = [];
+				return batch;
+			});
+
+		var now = Date.now();
+		var rand = Math.round(Math.random() * 4026531839 + 268435456).toString(16);
+
+		stream.write({ time: now - 86400000 * 2, msg: rand + ' -2 days' });
+		stream.write({ time: now, msg: rand + ' now' });
+
+		stream.once('putLogEvents', function() {
+			done(new Error('Expected not to be called'));
+		});
+	});
+
 	it('should ignore log entries that are older than 14 days or over 2 hours in the future', function(done) {
 		var stream = new CWLogsWritable({
 			logGroupName: logGroupName,
