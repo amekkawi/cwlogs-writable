@@ -616,6 +616,11 @@ describe('CWLogsWritable', function() {
 				logStreamName: 'bar'
 			});
 
+			// For simplicity, force message size calc to exact character length.
+			stream.getMessageSize = function(str) {
+				return str.length;
+			};
+
 			var batch = stream.dequeueNextLogBatch();
 			expect(batch.length).toBe(0);
 			expect(batch).toNotBe(stream.queuedLogs);
@@ -626,6 +631,11 @@ describe('CWLogsWritable', function() {
 				logGroupName: 'foo',
 				logStreamName: 'bar'
 			});
+
+			// For simplicity, force message size calc to exact character length.
+			stream.getMessageSize = function(str) {
+				return str.length;
+			};
 
 			stream._sendLogs = function() {
 				// Do nothing
@@ -648,6 +658,11 @@ describe('CWLogsWritable', function() {
 				logStreamName: 'bar'
 			});
 
+			// For simplicity, force message size calc to exact character length.
+			stream.getMessageSize = function(str) {
+				return str.length;
+			};
+
 			stream._sendLogs = function() {
 				// Do nothing
 			};
@@ -667,9 +682,9 @@ describe('CWLogsWritable', function() {
 			var origStream = stream.queuedLogs;
 
 			var batch = stream.dequeueNextLogBatch();
-			expect(stream.queuedLogs).toNotBe(origStream);
 			expect(batch.length).toBe(willFit + 1);
 			expect(stream.queuedLogs.length).toBe(0);
+			expect(stream.queuedLogs === origStream).toBe(false, 'Expected stream.queuedLogs to be a different array');
 		});
 
 		it('should be part of queue if too large for one batch', function() {
@@ -677,6 +692,11 @@ describe('CWLogsWritable', function() {
 				logGroupName: 'foo',
 				logStreamName: 'bar'
 			});
+
+			// For simplicity, force message size calc to exact character length.
+			stream.getMessageSize = function(str) {
+				return str.length;
+			};
 
 			stream._sendLogs = function() {
 				// Do nothing
@@ -699,8 +719,8 @@ describe('CWLogsWritable', function() {
 			expect(stream.queuedLogs.length).toBe(willFit + 1);
 			var batch = stream.dequeueNextLogBatch();
 			expect(batch.length).toBe(willFit);
-			expect(stream.queuedLogs).toBe(origStream);
 			expect(stream.queuedLogs.length).toBe(1);
+			expect(stream.queuedLogs === origStream).toBe(true, 'Expected stream.queuedLogs to be the same array');
 		});
 
 		it('should use maxBatchCount option', function() {
@@ -731,6 +751,11 @@ describe('CWLogsWritable', function() {
 				logStreamName: 'bar',
 				maxBatchSize: maxSize
 			});
+
+			// For simplicity, force message size calc to exact character length.
+			stream.getMessageSize = function(str) {
+				return str.length;
+			};
 
 			stream._sendLogs = function() {
 				// Do nothing
@@ -840,6 +865,26 @@ describe('CWLogsWritable', function() {
 				}
 			]);
 			expect(stream.queuedLogs.length).toBe(0);
+		});
+	});
+
+	describe('CWLogsWritable#getMessageSize', function() {
+		it('should return the expected size', function() {
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			});
+
+			var singleByteString = '1234';
+			expect(singleByteString.length).toBe(4);
+			expect(Buffer.byteLength(singleByteString)).toBe(4);
+
+			var multiByteString = 'I \u2764 AWS';
+			expect(multiByteString.length).toBe(7);
+			expect(Buffer.byteLength(multiByteString)).toBe(9);
+
+			expect(stream.getMessageSize('1234')).toBe(16);
+			expect(stream.getMessageSize(multiByteString)).toBe(28);
 		});
 	});
 
