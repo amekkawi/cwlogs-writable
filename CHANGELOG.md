@@ -1,5 +1,9 @@
 # cwlogs-writable Change Log #
 
+## 0.4.1 (Jun 13, 2017)
+
+  * Fix error thrown if no 'error' event listeners on stream [#15]
+
 ## 0.4.0 (Jun 11, 2017)
 
   **Breaking Changes:**
