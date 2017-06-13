@@ -46,10 +46,13 @@ npm run lint
 
 echo
 echo
-echo "Running tests..."
+echo "Running tests and coverage..."
 echo "========================"
-npm test
+npm run -s test
 [ $? -ne 0 ] && echo "Failed to run tests" 1>&2 && exit 1
+
+npm run -s cover
+[ $? -ne 0 ] && echo "Failed to run cover" 1>&2 && exit 1
 
 echo
 echo "Running docs..."
@@ -64,6 +67,7 @@ sleep "$SLEEP_SECONDS"
 git diff-index --quiet HEAD
 if [ $? -ne 0 ]; then
     echo "Failed: Generated docs resulted in uncommitted changes in the working tree and/or index" 1>&2
+    echo "To set a longer sleep use: export SLEEP_SECONDS=10" 1>&2
     git diff-index HEAD 1>&2
     exit 1
 fi
