@@ -46,7 +46,7 @@ describe('AWS Live Test', function() {
 		});
 
 		stream.on('error', function(err) {
-			throw err;
+			done(err);
 		});
 
 		stream.on('putLogEvents', function(logEvents) {
@@ -61,6 +61,58 @@ describe('AWS Live Test', function() {
 				rand: Math.random()
 			});
 		}
+	});
+
+	it('should handle invalid accessKeyId (UnrecognizedClientException)', function(done) {
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			onError: function(err) {
+				expect(err.code).toBe('UnrecognizedClientException');
+
+				// Set delay to make sure AWS-SDK doesn't throw an error.
+				setTimeout(function() {
+					done();
+				}, 50);
+			},
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: 'nope',
+				secretAccessKey: 'nope'
+			}
+		});
+
+		stream.write('foo');
+
+		stream.on('putLogEvents', function() {
+			done(new Error('Expected to not be called'));
+		});
+	});
+
+	it('should handle invalid secretAccessKey (InvalidSignatureException)', function(done) {
+		var stream = new CWLogsWritable({
+			logGroupName: logGroupName,
+			logStreamName: logStreamName,
+			onError: function(err) {
+				expect(err.code).toBe('InvalidSignatureException');
+
+				// Set delay to make sure AWS-SDK doesn't throw an error.
+				setTimeout(function() {
+					done();
+				}, 50);
+			},
+			cloudWatchLogsOptions: {
+				region: region,
+				accessKeyId: accessKeyId,
+				secretAccessKey: '0OKW39DejMUcepCSKAkYuKLwuz3k60VdJXinDQHS'
+			}
+		});
+
+		stream.write('foo');
+
+		stream.on('putLogEvents', function() {
+			done(new Error('Expected to not be called'));
+		});
 	});
 
 	it('should allow up to 262118 bytes (256 KB - 26 bytes) for the message', function(done) {
@@ -78,9 +130,7 @@ describe('AWS Live Test', function() {
 		expect(maxSize).toBe(262118);
 
 		stream.on('error', function(err) {
-			//console.error({ m: err.message, c: err.code, s: err.statusCode });
-			//console.log(Object.keys(err));
-			throw err;
+			done(err);
 		});
 
 		stream.on('putLogEvents', function(logEvents) {
@@ -113,7 +163,7 @@ describe('AWS Live Test', function() {
 		});
 
 		stream.on('putLogEvents', function() {
-			throw new Error('Expected not to succeed');
+			done(new Error('Expected not to succeed'));
 		});
 
 		var largeMessage = new Array(maxSize + 2).join('0');
@@ -132,7 +182,7 @@ describe('AWS Live Test', function() {
 		});
 
 		stream.on('error', function(err) {
-			throw err;
+			done(err);
 		});
 
 		stream.on('putLogEvents', function(logEvents) {
@@ -178,7 +228,7 @@ describe('AWS Live Test', function() {
 		});
 
 		stream.onError = function() {
-			throw new Error('Expected not to be called');
+			done(new Error('Expected not to be called'));
 		};
 
 		stream.write('foo');

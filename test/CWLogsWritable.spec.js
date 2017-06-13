@@ -2087,6 +2087,23 @@ describe('CWLogsWritable', function() {
 			expect(clearQueueSpy.calls.length).toBe(1);
 			expect(stream.filterWrite).toBe(CWLogsWritable._falseFilterWrite);
 		});
+
+		it('should not emit "error" event if there are no listeners', function() {
+			var expectedError = new Error();
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			});
+
+			var clearQueueSpy = expect.spyOn(stream, 'clearQueue');
+
+			var emitSpy = expect.spyOn(stream, 'emit').andCallThrough();
+
+			stream._handleError(expectedError);
+			expect(emitSpy.calls.length).toBe(0);
+			expect(clearQueueSpy.calls.length).toBe(1);
+			expect(stream.filterWrite).toBe(CWLogsWritable._falseFilterWrite);
+		});
 	});
 
 	describe('CWLogsWritable._falseFilterWrite', function() {
