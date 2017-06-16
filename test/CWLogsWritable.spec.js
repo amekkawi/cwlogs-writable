@@ -5,6 +5,7 @@ var inherits = require('util').inherits;
 var expect = require('./setup');
 var Writable = require('stream').Writable;
 var proxyquire = require('proxyquire');
+var MAX_MESSAGE_SIZE = 262118;
 
 describe('CWLogsWritable', function() {
 	var noop = function() {};
@@ -687,6 +688,116 @@ describe('CWLogsWritable', function() {
 			expect(stream.queuedLogs === origStream).toBe(false, 'Expected stream.queuedLogs to be a different array');
 		});
 
+		it('should skip overlarge log events and emit a oversizeLogEvent event for each', function() {
+			var stream = new CWLogsWritable({
+				logGroupName: 'foo',
+				logStreamName: 'bar'
+			});
+
+			// For simplicity, force message size calc to exact character length.
+			var getSizeSpy = stream.getMessageSize = expect.createSpy().andCall(function(str) {
+				return str.length;
+			});
+
+			stream._sendLogs = function() {
+				// Do nothing
+			};
+
+			var reduceSpy = stream.reduceOversizedMessage = expect.createSpy().andCall(function(message) {
+				if (message[0] === 'b') {
+					return message + '0';
+				}
+				// Reduce the long 'e...e' message to a single 'E'
+				else if (message[0] === 'e') {
+					return 'E';
+				}
+				else {
+					return null;
+				}
+			});
+
+			var emitSpy = expect.createSpy();
+			stream.on('oversizeLogEvent', emitSpy);
+
+			stream.write('a'); // Keep this log event
+			stream.write(new Array(MAX_MESSAGE_SIZE + 2).join('b')); // Drop this log event
+			stream.write('c'); // Keep this log event
+			stream.write(new Array(MAX_MESSAGE_SIZE + 2).join('d')); // Drop this log event
+			stream.write(new Array(MAX_MESSAGE_SIZE + 2).join('e')); // Keep this log event, as it is reduced to "E"
+			stream.write('f'); // Keepthis log event
+
+			var batch = stream.dequeueNextLogBatch();
+
+			expect(batch.length).toBe(4);
+			expect(batch[0].message.length).toBe(1);
+			expect(batch[0].message).toBe('a');
+			expect(batch[1].message.length).toBe(1);
+			expect(batch[1].message).toBe('c');
+			expect(batch[2].message.length).toBe(1);
+			expect(batch[2].message).toBe('E');
+			expect(batch[3].message.length).toBe(1);
+			expect(batch[3].message).toBe('f');
+			expect(stream.queuedLogs.length).toBe(0);
+
+			expect(getSizeSpy.calls.length).toBe(8);
+
+			expect(getSizeSpy.calls[0].arguments.length).toBe(1);
+			expect(getSizeSpy.calls[0].arguments[0].length).toBe(1);
+			expect(getSizeSpy.calls[0].arguments[0]).toBe('a');
+
+			expect(getSizeSpy.calls[1].arguments.length).toBe(1);
+			expect(getSizeSpy.calls[1].arguments[0].length).toBe(262119);
+			expect(!!getSizeSpy.calls[1].arguments[0].match(/^b+$/)).toBe(true, 'Expected to match /^b+$/');
+
+			expect(getSizeSpy.calls[2].arguments.length).toBe(1);
+			expect(getSizeSpy.calls[2].arguments[0].length).toBe(262120);
+			expect(!!getSizeSpy.calls[2].arguments[0].match(/^b+0$/)).toBe(true, 'Expected to match /^b+0$/');
+
+			expect(getSizeSpy.calls[3].arguments.length).toBe(1);
+			expect(getSizeSpy.calls[3].arguments[0].length).toBe(1);
+			expect(getSizeSpy.calls[3].arguments[0]).toBe('c');
+
+			expect(getSizeSpy.calls[4].arguments.length).toBe(1);
+			expect(getSizeSpy.calls[4].arguments[0].length).toBe(262119);
+			expect(!!getSizeSpy.calls[4].arguments[0].match(/^d+$/)).toBe(true, 'Expected to match /^d+$/');
+
+			expect(getSizeSpy.calls[5].arguments.length).toBe(1);
+			expect(getSizeSpy.calls[5].arguments[0].length).toBe(262119);
+			expect(!!getSizeSpy.calls[5].arguments[0].match(/^e+$/)).toBe(true, 'Expected to match /^e+$/');
+
+			expect(getSizeSpy.calls[6].arguments.length).toBe(1);
+			expect(getSizeSpy.calls[6].arguments[0].length).toBe(1);
+			expect(getSizeSpy.calls[6].arguments[0]).toBe('E');
+
+			expect(getSizeSpy.calls[7].arguments.length).toBe(1);
+			expect(getSizeSpy.calls[7].arguments[0].length).toBe(1);
+			expect(getSizeSpy.calls[7].arguments[0]).toBe('f');
+
+			expect(reduceSpy.calls.length).toBe(3);
+
+			expect(reduceSpy.calls[0].arguments.length).toBe(1);
+			expect(reduceSpy.calls[0].arguments[0].length).toBe(262119);
+			expect(!!reduceSpy.calls[0].arguments[0].match(/^b+$/)).toBe(true, 'Expected to match /^b+$/');
+
+			expect(reduceSpy.calls[1].arguments.length).toBe(1);
+			expect(reduceSpy.calls[1].arguments[0].length).toBe(262119);
+			expect(!!reduceSpy.calls[1].arguments[0].match(/^d+$/)).toBe(true, 'Expected to match /^d+$/');
+
+			expect(reduceSpy.calls[2].arguments.length).toBe(1);
+			expect(reduceSpy.calls[2].arguments[0].length).toBe(262119);
+			expect(!!reduceSpy.calls[2].arguments[0].match(/^e+$/)).toBe(true, 'Expected to match /^d+$/');
+
+			expect(emitSpy.calls.length).toBe(2);
+
+			expect(emitSpy.calls[0].arguments.length).toBe(1);
+			expect(emitSpy.calls[0].arguments[0].length).toBe(262119);
+			expect(!!emitSpy.calls[0].arguments[0].match(/^b+$/)).toBe(true, 'Expected to match /^b+$/');
+
+			expect(emitSpy.calls[1].arguments.length).toBe(1);
+			expect(emitSpy.calls[1].arguments[0].length).toBe(262119);
+			expect(!!emitSpy.calls[1].arguments[0].match(/^d+$/)).toBe(true, 'Expected to match /^d+$/');
+		});
+
 		it('should be part of queue if too large for one batch', function() {
 			var stream = new CWLogsWritable({
 				logGroupName: 'foo',
@@ -734,14 +845,41 @@ describe('CWLogsWritable', function() {
 				// Do nothing
 			};
 
+			var emitSpy = expect.createSpy();
+			stream.on('oversizeLogEvent', emitSpy);
+
+			// Fake the size of the "big" message.
+			var origMessageSize = stream.getMessageSize;
+			stream.getMessageSize = function(msg) {
+				return msg === 'big'
+					? MAX_MESSAGE_SIZE + 10
+					: origMessageSize.apply(this, arguments);
+			};
+
+			stream.write('big');
+
 			for (var i = 0; i < 15; i++) {
 				stream.write('---');
 			}
 
-			expect(stream.queuedLogs.length).toBe(15);
+			expect(stream.queuedLogs.length).toBe(16);
+
 			var batch = stream.dequeueNextLogBatch();
+
 			expect(batch.length).toBe(10);
+			batch.forEach(function(logEvent, i) {
+				expect(logEvent.message).toEqual('---', 'Expected batch[' + i + '].message %s to be %s');
+			});
+
 			expect(stream.queuedLogs.length).toBe(5);
+
+			stream.queuedLogs.forEach(function(logEvent, i) {
+				expect(logEvent.message).toEqual('---', 'Expected stream.queuedLogs[' + i + '].message %s to be %s');
+			});
+
+			expect(emitSpy.calls.length).toBe(1);
+			expect(emitSpy.calls[0].arguments.length).toBe(1);
+			expect(emitSpy.calls[0].arguments[0]).toBe('big');
 		});
 
 		it('should use maxBatchSize option', function() {
@@ -869,22 +1007,53 @@ describe('CWLogsWritable', function() {
 	});
 
 	describe('CWLogsWritable#getMessageSize', function() {
-		it('should return the expected size', function() {
+		var stream = new CWLogsWritable({
+			logGroupName: 'foo',
+			logStreamName: 'bar'
+		});
+
+		it('should only estimate the size if less than the max message size', function() {
+			// Simple message.
+			var singleByteString = '1234';
+			expect(singleByteString.length).toBe(4);
+			expect(Buffer.byteLength(singleByteString)).toBe(4);
+			expect(stream.getMessageSize(singleByteString)).toBe(16);
+
+			// Has multi-byte character.
+			var multiByteString = 'I \u2764 AWS';
+			expect(multiByteString.length).toBe(7);
+			expect(Buffer.byteLength(multiByteString)).toBe(9);
+			expect(stream.getMessageSize(multiByteString)).toBe(28);
+
+			// Just under the max message size.
+			var maxMultiByteString = new Array(Math.floor(MAX_MESSAGE_SIZE / 4) + 1).join('\u2764');
+			expect(maxMultiByteString.length).toBe(65529);
+			expect(maxMultiByteString.length * 4).toBeLessThan(MAX_MESSAGE_SIZE);
+			expect(Buffer.byteLength(maxMultiByteString)).toBe(196587);
+			expect(Buffer.byteLength(maxMultiByteString)).toBeLessThan(MAX_MESSAGE_SIZE);
+			expect(stream.getMessageSize(maxMultiByteString)).toBe(262116);
+		});
+
+		it('should return the exact number of bytes if the estimate is over the max', function() {
+			var oversizedMultiByteString = new Array(Math.floor(MAX_MESSAGE_SIZE / 4) + 2).join('\u2764');
+			expect(oversizedMultiByteString.length).toBe(65530);
+			expect(oversizedMultiByteString.length * 4).toBeGreaterThan(MAX_MESSAGE_SIZE);
+			expect(Buffer.byteLength(oversizedMultiByteString)).toBe(196590);
+			expect(Buffer.byteLength(oversizedMultiByteString)).toBeLessThan(MAX_MESSAGE_SIZE);
+			expect(stream.getMessageSize(oversizedMultiByteString)).toBe(196590);
+
+		});
+	});
+
+	describe('CWLogsWritable#reduceOversizedMessage', function() {
+		it('should return null', function() {
 			var stream = new CWLogsWritable({
 				logGroupName: 'foo',
 				logStreamName: 'bar'
 			});
 
-			var singleByteString = '1234';
-			expect(singleByteString.length).toBe(4);
-			expect(Buffer.byteLength(singleByteString)).toBe(4);
-
-			var multiByteString = 'I \u2764 AWS';
-			expect(multiByteString.length).toBe(7);
-			expect(Buffer.byteLength(multiByteString)).toBe(9);
-
-			expect(stream.getMessageSize('1234')).toBe(16);
-			expect(stream.getMessageSize(multiByteString)).toBe(28);
+			expect(stream.reduceOversizedMessage('')).toBe(null);
+			expect(stream.reduceOversizedMessage('foo')).toBe(null);
 		});
 	});
 

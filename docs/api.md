@@ -21,10 +21,12 @@
     * [.clearQueue()](#CWLogsWritable+clearQueue) ⇒ <code>Array.&lt;{message:string, timestamp:number}&gt;</code>
     * [.onError(err, logEvents, next)](#CWLogsWritable+onError)
     * [.filterWrite(rec)](#CWLogsWritable+filterWrite) ⇒ <code>boolean</code>
+    * [.reduceOversizedMessage(logEventMessage)](#CWLogsWritable+reduceOversizedMessage) ⇒ <code>\*</code> &#124; <code>string</code>
     * ["putLogEvents" (logEvents)](#CWLogsWritable+event_putLogEvents)
     * ["createLogGroup"](#CWLogsWritable+event_createLogGroup)
     * ["createLogStream"](#CWLogsWritable+event_createLogStream)
     * ["stringifyError" (err, rec)](#CWLogsWritable+event_stringifyError)
+    * ["oversizeLogEvent" (logEventMessage)](#CWLogsWritable+event_oversizeLogEvent)
 
 <a name="new_CWLogsWritable_new"></a>
 
@@ -237,6 +239,27 @@ Default behavior is to return true if `rec` is not null or undefined.
 
 - rec <code>string</code> | <code>object</code> - Raw log record passed to Writable#write.
 
+<a name="CWLogsWritable+reduceOversizedMessage"></a>
+
+### cwLogsWritable.reduceOversizedMessage(logEventMessage) ⇒ <code>\*</code> &#124; <code>string</code>
+Attempt to reduce the specified message so it fits within the
+262118 byte limit enforced by PutLogEvents.
+
+Only called for messages that are over the byte limit.
+
+Use [Buffer.byteLength()](https://nodejs.org/api/buffer.html#buffer_class_method_buffer_bytelength_string_encoding)
+to accurately measure the message size before returning it.
+
+If the string returned is still over the byte limit, this method
+will _not_ be called again for the log event.
+
+**Kind**: instance method of <code>[CWLogsWritable](#CWLogsWritable)</code>  
+**Returns**: <code>\*</code> &#124; <code>string</code> - - The reduced string, or a non-string (i.e. undefined or null) indicating the message cannot be reduced.  
+**See**: {CWLogsWritable#event:oversizeLogEvent}  
+**Params**
+
+- logEventMessage <code>string</code> - Stringified log event.
+
 <a name="CWLogsWritable+event_putLogEvents"></a>
 
 ### "putLogEvents" (logEvents)
@@ -269,4 +292,14 @@ Fired when an error is thrown while stringifying a log event.
 
 - err <code>Error</code>
 - rec <code>object</code> | <code>string</code>
+
+<a name="CWLogsWritable+event_oversizeLogEvent"></a>
+
+### "oversizeLogEvent" (logEventMessage)
+Fired when a log event message is larger than the 262118 byte limit enforced by PutLogEvents.
+
+**Kind**: event emitted by <code>[CWLogsWritable](#CWLogsWritable)</code>  
+**Params**
+
+- logEventMessage <code>string</code> - Stringified log event.
 
