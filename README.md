@@ -2,10 +2,10 @@
 
 Writable stream for AWS CloudWatch Logs, inspired by [bunyan-cloudwatch](https://github.com/mirkokiefer/bunyan-cloudwatch).
 
-[![Build Status](https://travis-ci.org/amekkawi/cwlogs-writable.svg?branch=v0.4.1)](https://travis-ci.org/amekkawi/cwlogs-writable)
-[![Coverage Status](https://coveralls.io/repos/github/amekkawi/cwlogs-writable/badge.svg?branch=v0.4.1)](https://coveralls.io/github/amekkawi/cwlogs-writable?branch=v0.4.1)
-[![Dependencies Status](https://david-dm.org/amekkawi/cwlogs-writable/v0.4.1/status.svg)](https://david-dm.org/amekkawi/cwlogs-writable/v0.4.1)
-[![Optional Dependencies Status](https://david-dm.org/amekkawi/cwlogs-writable/v0.4.1/optional-status.svg)](https://david-dm.org/amekkawi/cwlogs-writable/v0.4.1?type=optional)
+[![Build Status](https://travis-ci.org/amekkawi/cwlogs-writable.svg?branch=v0.4.2)](https://travis-ci.org/amekkawi/cwlogs-writable)
+[![Coverage Status](https://coveralls.io/repos/github/amekkawi/cwlogs-writable/badge.svg?branch=v0.4.2)](https://coveralls.io/github/amekkawi/cwlogs-writable?branch=v0.4.2)
+[![Dependencies Status](https://david-dm.org/amekkawi/cwlogs-writable/v0.4.2/status.svg)](https://david-dm.org/amekkawi/cwlogs-writable/v0.4.2)
+[![Optional Dependencies Status](https://david-dm.org/amekkawi/cwlogs-writable/v0.4.2/optional-status.svg)](https://david-dm.org/amekkawi/cwlogs-writable/v0.4.2?type=optional)
 
 * [Features](#features)
 * [API Docs](#api-docs)

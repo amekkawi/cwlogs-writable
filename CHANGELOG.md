@@ -1,5 +1,9 @@
 # cwlogs-writable Change Log #
 
+## 0.4.2 (Jun 17, 2017)
+
+  * Fix determining log "message" size not handling multi-byte chars [#13]
+
 ## 0.4.1 (Jun 13, 2017)
 
   * Fix error thrown if no 'error' event listeners on stream [#15]
