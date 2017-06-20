@@ -1,5 +1,6 @@
 'use strict';
 
+var MAX_MESSAGE_SIZE = 262118;
 var expect = require('./setup');
 var path = require('path');
 require('dotenv').config({
@@ -126,9 +127,6 @@ describe('AWS Live Test', function() {
 			}
 		});
 
-		var maxSize = 256 * 1024 - 26;
-		expect(maxSize).toBe(262118);
-
 		stream.on('error', function(err) {
 			done(err);
 		});
@@ -138,11 +136,11 @@ describe('AWS Live Test', function() {
 			done();
 		});
 
-		var largeMessage = new Array(maxSize + 1).join('0');
+		var largeMessage = new Array(MAX_MESSAGE_SIZE + 1).join('0');
 		stream.write(largeMessage);
 	});
 
-	it('should fail if message is over 262118 bytes (256 KB - 26 bytes) for the message', function(done) {
+	it('should fail if message is over 262118 bytes (256 KB - 26 bytes) and is forced to send', function(done) {
 		var stream = new CWLogsWritable({
 			logGroupName: logGroupName,
 			logStreamName: logStreamName,
@@ -153,8 +151,10 @@ describe('AWS Live Test', function() {
 			}
 		});
 
-		var maxSize = 256 * 1024 - 26;
-		expect(maxSize).toBe(262118);
+		// Force the overlarge message to be sent.
+		stream.dequeueNextLogBatch = function() {
+			return this.queuedLogs.splice(0, 1);
+		};
 
 		stream.on('error', function(err) {
 			expect(err.name).toBe('InvalidParameterException');
@@ -166,7 +166,7 @@ describe('AWS Live Test', function() {
 			done(new Error('Expected not to succeed'));
 		});
 
-		var largeMessage = new Array(maxSize + 2).join('0');
+		var largeMessage = new Array(MAX_MESSAGE_SIZE + 2).join('0');
 		stream.write(largeMessage);
 	});
 
@@ -182,7 +182,13 @@ describe('AWS Live Test', function() {
 		});
 
 		stream.on('error', function(err) {
-			done(err);
+			var expectErr = new Error('Expected not to emit error -- ' + err.name + ': ' + err.message);
+			var expectStack = expectErr.stack.split(/\n/g);
+			expectStack = expectStack.length > 10
+				? expectStack.slice(0, 10).join('\n') + '\n    ...'
+				: expectStack.join('\n');
+			expectErr.stack = expectStack + '\n' + err.stack;
+			done(expectErr);
 		});
 
 		stream.on('putLogEvents', function(logEvents) {
@@ -227,8 +233,14 @@ describe('AWS Live Test', function() {
 			}
 		});
 
-		stream.onError = function() {
-			done(new Error('Expected not to be called'));
+		stream.onError = function(err) {
+			var expectErr = new Error('Expected onError not to be called -- ' + err.name + ': ' + err.message);
+			var expectStack = expectErr.stack.split(/\n/g);
+			expectStack = expectStack.length > 10
+				? expectStack.slice(0, 10).join('\n') + '\n    ...'
+				: expectStack.join('\n');
+			expectErr.stack = expectStack + '\n' + err.stack;
+			done(expectErr);
 		};
 
 		stream.write('foo');
@@ -244,7 +256,13 @@ describe('AWS Live Test', function() {
 			stream.write('bar');
 
 			stream.on('error', function(err) {
-				done(err);
+				var expectErr = new Error('Expected not to emit error -- ' + err.name + ': ' + err.message);
+				var expectStack = expectErr.stack.split(/\n/g);
+				expectStack = expectStack.length > 10
+					? expectStack.slice(0, 10).join('\n') + '\n    ...'
+					: expectStack.join('\n');
+				expectErr.stack = expectStack + '\n' + err.stack;
+				done(expectErr);
 			});
 
 			stream.once('putLogEvents', function() {
