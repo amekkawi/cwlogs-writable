@@ -1,6 +1,6 @@
 {
   "name": "cwlogs-writable",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Writable stream for AWS CloudWatch Logs",
   "main": "lib/index.js",
   "author": "Andre Mekkawi <github@andremekkawi.com>",
@@ -14,6 +14,7 @@
     "url": "https://github.com/amekkawi/cwlogs-writable.git"
   },
   "scripts": {
+    "prep": "npm run lint && npm run cover && npm run docs",
     "docs": "npm run docs-readme && npm run docs-changelog && npm run docs-api && npm run docs-api-protected",
     "docs-readme": "node .bin/docs/index.js README.md --readme=README --overwrite",
     "docs-changelog": "node .bin/docs/index.js CHANGELOG.md --readme=CHANGELOG --overwrite --protected",

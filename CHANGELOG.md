@@ -1,5 +1,20 @@
 # cwlogs-writable Change Log #
 
+## 0.4.3 (Jun 19, 2017)
+
+  * Add support for validating max message bytes
+     * Add [CWLogsWritable#reduceOversizedMessage](docs/api-protected.md#CWLogsWritable+reduceOversizedMessage) method to allow custom
+       handling of oversized messages to reduce their size.
+     * Add [CWLogsWritable#event:oversizeLogEvent](docs/api-protected.md#CWLogsWritable+event_oversizeLogEvent) event that is fired for
+       messages that are dropped due to their size.
+     * Change [CWLogsWritable#getMessageSize](docs/api-protected.md#CWLogsWritable+getMessageSize) to accurately measure the byte
+       size if the estimate puts it over the max size.
+     * Change [CWLogsWritable#dequeueNextLogBatch](docs/api-protected.md#CWLogsWritable+dequeueNextLogBatch) to drop log events if:
+        * getMessageSize returns a size for the message that is over the
+          limit, and...
+        * Passing the message through reduceOversizedMessage does not
+          reduce the message to fit within the limit.
+
 ## 0.4.2 (Jun 17, 2017)
 
   * Fix determining log "message" size not handling multi-byte chars [#13]
