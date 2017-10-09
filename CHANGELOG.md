@@ -1,5 +1,9 @@
 # cwlogs-writable Change Log #
 
+## 1.0.0 (Oct 9, 2017)
+
+  * Bump to v1.0.0
+
 ## 0.4.3 (Jun 19, 2017)
 
   * Add support for validating max message bytes
